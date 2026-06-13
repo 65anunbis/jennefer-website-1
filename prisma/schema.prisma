@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DeliveryType {
+  in_person
+  zoom
+}
+
+enum ClientPackageStatus {
+  active
+  completed
+  cancelled
+}
+
+enum BookingStatus {
+  confirmed
+  completed
+  cancelled
+  no_show
+}
+
+enum AdminRole {
+  admin
+  staff
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+  view_sensitive
+}
+
+enum AuditResourceType {
+  client
+  client_package
+  booking
+  session_note
+  service
+  service_package
+  blog_post
+  testimonial
+  admin_user
+}
+
+model Service {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?  @map("image_url")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  packages     ServicePackage[]
+  testimonials Testimonial[]
+
+  @@map("services")
+}
+
+model ServicePackage {
+  id              Int          @id @default(autoincrement())
+  serviceId       Int          @map("service_id")
+  name            String
+  priceSgd        Decimal      @map("price_sgd") @db.Decimal(10, 2)
+  durationMinutes Int          @map("duration_minutes")
+  sessionsCount   Int          @map("sessions_count")
+  deliveryType    DeliveryType @map("delivery_type")
+  description     String?
+  active          Boolean      @default(true)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  service        Service         @relation(fields: [serviceId], references: [id])
+  clientPackages ClientPackage[]
+
+  @@index([serviceId])
+  @@map("service_packages")
+}
+
+model Client {
+  id             Int      @id @default(autoincrement())
+  name           String
+  whatsappNumber String   @map("whatsapp_number")
+  email          String?
+  notes          String?
+  additionalId   String?  @map("additional_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  clientPackages ClientPackage[]
+  bookings       Booking[]
+  sessionNotes   SessionNote[]
+
+  @@map("clients")
+}
+
+model ClientPackage {
+  id            Int                 @id @default(autoincrement())
+  clientId      Int                 @map("client_id")
+  packageId     Int                 @map("package_id")
+  sessionsTotal Int                 @map("sessions_total")
+  pricePaidSgd  Decimal             @map("price_paid_sgd") @db.Decimal(10, 2)
+  purchasedDate DateTime            @map("purchased_date") @db.Date
+  status        ClientPackageStatus @default(active)
+  notes         String?
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  client   Client         @relation(fields: [clientId], references: [id])
+  package  ServicePackage @relation(fields: [packageId], references: [id])
+  bookings Booking[]
+
+  @@index([clientId])
+  @@index([packageId])
+  @@map("client_packages")
+}
+
+model Booking {
+  id              Int           @id @default(autoincrement())
+  gcalEventId     String?       @map("gcal_event_id")
+  clientId        Int           @map("client_id")
+  clientPackageId Int?          @map("client_package_id")
+  scheduledDate   DateTime      @map("scheduled_date") @db.Date
+  scheduledTime   DateTime      @map("scheduled_time") @db.Time(6)
+  status          BookingStatus @default(confirmed)
+  bookingNotes    String?       @map("booking_notes")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  client        Client         @relation(fields: [clientId], references: [id])
+  clientPackage ClientPackage? @relation(fields: [clientPackageId], references: [id])
+  sessionNotes  SessionNote[]
+
+  @@index([clientId])
+  @@index([clientPackageId])
+  @@index([scheduledDate])
+  @@map("bookings")
+}
+
+model SessionNote {
+  id        Int      @id @default(autoincrement())
+  clientId  Int      @map("client_id")
+  bookingId Int?     @map("booking_id")
+  noteDate  DateTime @map("note_date") @db.Date
+  content   String
+  createdBy Int      @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client        Client    @relation(fields: [clientId], references: [id])
+  booking       Booking?  @relation(fields: [bookingId], references: [id])
+  createdByUser AdminUser @relation(fields: [createdBy], references: [id])
+
+  @@index([clientId])
+  @@index([bookingId])
+  @@map("session_notes")
+}
+
+model BlogPost {
+  id            Int       @id @default(autoincrement())
+  title         String
+  slug          String    @unique
+  content       Json
+  excerpt       String?
+  coverImageUrl String?   @map("cover_image_url")
+  category      String?
+  authorId      Int       @map("author_id")
+  published     Boolean   @default(false)
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  author AdminUser @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+  @@map("blog_posts")
+}
+
+model Testimonial {
+  id         Int      @id @default(autoincrement())
+  clientName String   @map("client_name")
+  serviceId  Int?     @map("service_id")
+  quote      String
+  visible    Boolean  @default(true)
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  service Service? @relation(fields: [serviceId], references: [id])
+
+  @@index([serviceId])
+  @@map("testimonials")
+}
+
+model AdminUser {
+  id                 Int       @id @default(autoincrement())
+  name               String
+  email              String    @unique
+  passwordHash       String    @map("password_hash")
+  role               AdminRole @default(staff)
+  isActive           Boolean   @default(true) @map("is_active")
+  mustChangePassword Boolean   @default(false) @map("must_change_password")
+  lastLoginAt        DateTime? @map("last_login_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  sessionNotes SessionNote[]
+  blogPosts    BlogPost[]
+  auditLogs    AuditLog[]
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id           Int               @id @default(autoincrement())
+  actorId      Int?              @map("actor_id")
+  actorEmail   String            @map("actor_email")
+  action       AuditAction
+  resourceType AuditResourceType @map("resource_type")
+  resourceId   Int?              @map("resource_id")
+  summary      String
+  ipAddress    String?           @map("ip_address")
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  actor AdminUser? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([resourceType, resourceId])
+  @@map("audit_log")
+}
