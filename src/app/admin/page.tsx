@@ -44,14 +44,24 @@ export default async function AdminDashboard({
             </Link>
           </li>
           {isAdmin && (
-            <li>
-              <Link
-                href="/admin/users"
-                className="text-neutral-900 underline underline-offset-2"
-              >
-                User management (admin only)
-              </Link>
-            </li>
+            <>
+              <li>
+                <Link
+                  href="/admin/services"
+                  className="text-neutral-900 underline underline-offset-2"
+                >
+                  Services &amp; pricing (admin only)
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/admin/users"
+                  className="text-neutral-900 underline underline-offset-2"
+                >
+                  User management (admin only)
+                </Link>
+              </li>
+            </>
           )}
         </ul>
       </section>
