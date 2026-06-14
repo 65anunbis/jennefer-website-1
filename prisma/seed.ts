@@ -457,10 +457,12 @@ async function main() {
         ipAddress: "127.0.0.1",
       },
       {
+        // Bulk view of a client's notes → logged against the client (no single
+        // note is the target). See plan §10 resource_id convention.
         actorId: jennefer.id,
         actorEmail: jennefer.email,
         action: "view_sensitive",
-        resourceType: "session_note",
+        resourceType: "client",
         resourceId: amanda.id,
         summary: "Viewed session notes for client",
         ipAddress: "127.0.0.1",
