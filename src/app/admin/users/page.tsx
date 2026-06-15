@@ -44,6 +44,7 @@ export default async function UsersPage() {
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
               <th className="px-4 py-3 font-medium">Name</th>
+              <th className="px-4 py-3 font-medium">Username</th>
               <th className="px-4 py-3 font-medium">Email</th>
               <th className="px-4 py-3 font-medium">Role</th>
               <th className="px-4 py-3 font-medium">Status</th>
@@ -65,7 +66,8 @@ export default async function UsersPage() {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3">{u.email}</td>
+                <td className="px-4 py-3">{u.username}</td>
+                <td className="px-4 py-3">{u.email ?? "—"}</td>
                 <td className="px-4 py-3 capitalize">{u.role}</td>
                 <td className="px-4 py-3">
                   {u.isActive ? (

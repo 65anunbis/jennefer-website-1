@@ -21,14 +21,14 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.username || !credentials?.password) return null;
 
         const user = await prisma.adminUser.findUnique({
-          where: { email: credentials.email.toLowerCase().trim() },
+          where: { username: credentials.username.toLowerCase().trim() },
         });
         if (!user || !user.isActive) return null;
 
@@ -38,7 +38,7 @@ export const authOptions: NextAuthOptions = {
         return {
           id: String(user.id),
           name: user.name,
-          email: user.email,
+          username: user.username,
           role: user.role,
           mustChangePassword: user.mustChangePassword,
         };
@@ -50,6 +50,7 @@ export const authOptions: NextAuthOptions = {
       // Initial sign-in: copy our fields onto the token.
       if (user) {
         token.id = user.id;
+        token.username = user.username;
         token.role = user.role;
         token.mustChangePassword = user.mustChangePassword;
       }
@@ -63,6 +64,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
+        session.user.username = token.username;
         session.user.role = token.role;
         session.user.mustChangePassword = token.mustChangePassword;
       }

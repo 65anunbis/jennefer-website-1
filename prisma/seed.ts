@@ -59,6 +59,7 @@ async function main() {
   const defaultAdmin = await prisma.adminUser.create({
     data: {
       name: "Default Admin",
+      username: "admin",
       email: "admin@jenneferwong.sg",
       passwordHash: await bcrypt.hash("ChangeMe123!", SALT_ROUNDS),
       role: "admin",
@@ -70,6 +71,7 @@ async function main() {
   const jennefer = await prisma.adminUser.create({
     data: {
       name: "Jennefer Wong",
+      username: "jennefer.wong",
       email: "jennefer@jenneferwong.sg",
       passwordHash: await bcrypt.hash("DevAdmin123!", SALT_ROUNDS),
       role: "admin",
@@ -82,6 +84,7 @@ async function main() {
   const staff = await prisma.adminUser.create({
     data: {
       name: "Reception Staff",
+      username: "reception",
       email: "staff@jenneferwong.sg",
       passwordHash: await bcrypt.hash("DevStaff123!", SALT_ROUNDS),
       role: "staff",
@@ -431,7 +434,7 @@ async function main() {
     data: [
       {
         actorId: jennefer.id,
-        actorEmail: jennefer.email,
+        actorUsername: jennefer.username,
         action: "create",
         resourceType: "client",
         resourceId: amanda.id,
@@ -440,7 +443,7 @@ async function main() {
       },
       {
         actorId: jennefer.id,
-        actorEmail: jennefer.email,
+        actorUsername: jennefer.username,
         action: "create",
         resourceType: "client_package",
         resourceId: amandaPkg.id,
@@ -449,7 +452,7 @@ async function main() {
       },
       {
         actorId: jennefer.id,
-        actorEmail: jennefer.email,
+        actorUsername: jennefer.username,
         action: "create",
         resourceType: "booking",
         resourceId: amandaBooking1.id,
@@ -460,7 +463,7 @@ async function main() {
         // Bulk view of a client's notes → logged against the client (no single
         // note is the target). See plan §10 resource_id convention.
         actorId: jennefer.id,
-        actorEmail: jennefer.email,
+        actorUsername: jennefer.username,
         action: "view_sensitive",
         resourceType: "client",
         resourceId: amanda.id,

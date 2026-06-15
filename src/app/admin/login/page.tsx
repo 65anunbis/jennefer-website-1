@@ -9,7 +9,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/admin";
 
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,14 +21,14 @@ function LoginForm() {
 
     const res = await signIn("credentials", {
       redirect: false,
-      email,
+      username,
       password,
     });
 
     setLoading(false);
 
     if (!res || res.error) {
-      setError("Invalid email or password.");
+      setError("Invalid username or password.");
       return;
     }
     // Middleware will route to the change-password page if required.
@@ -54,13 +54,15 @@ function LoginForm() {
         )}
 
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Email</span>
+          <span className="text-sm font-medium">Username</span>
           <input
-            type="email"
+            type="text"
             required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
           />
         </label>

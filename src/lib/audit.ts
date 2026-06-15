@@ -25,7 +25,7 @@ export async function recordAudit(
   await prisma.auditLog.create({
     data: {
       actorId: session?.user?.id ? Number(session.user.id) : null,
-      actorEmail: session?.user?.email ?? "system",
+      actorUsername: session?.user?.username ?? "system",
       action,
       resourceType,
       resourceId,

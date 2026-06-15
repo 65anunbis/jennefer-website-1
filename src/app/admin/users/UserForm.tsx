@@ -7,7 +7,13 @@ import type { UserFormState } from "./actions";
 type Props = {
   action: (prev: UserFormState, formData: FormData) => Promise<UserFormState>;
   mode: "create" | "edit";
-  user?: { name: string; email: string; role: string; isActive: boolean };
+  user?: {
+    name: string;
+    username: string;
+    email: string | null;
+    role: string;
+    isActive: boolean;
+  };
   isSelf?: boolean;
 };
 
@@ -51,14 +57,32 @@ export function UserForm({ action, mode, user, isSelf }: Props) {
       </label>
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Email</span>
+        <span className="text-sm font-medium">Username</span>
+        <input
+          name="username"
+          type="text"
+          required
+          autoCapitalize="none"
+          spellCheck={false}
+          defaultValue={user?.username ?? ""}
+          className={inputClass}
+        />
+        <span className="text-xs text-neutral-500">
+          Used to sign in. Lowercase letters, numbers, dot, underscore, or hyphen.
+        </span>
+      </label>
+
+      <label className="block space-y-1">
+        <span className="text-sm font-medium">Email (optional)</span>
         <input
           name="email"
           type="email"
-          required
           defaultValue={user?.email ?? ""}
           className={inputClass}
         />
+        <span className="text-xs text-neutral-500">
+          For contact only — not used to sign in.
+        </span>
       </label>
 
       <label className="block space-y-1">

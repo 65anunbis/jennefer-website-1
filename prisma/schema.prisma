@@ -203,7 +203,8 @@ model Testimonial {
 model AdminUser {
   id                 Int       @id @default(autoincrement())
   name               String
-  email              String    @unique
+  username           String    @unique
+  email              String?   @unique
   passwordHash       String    @map("password_hash")
   role               AdminRole @default(staff)
   isActive           Boolean   @default(true) @map("is_active")
@@ -222,7 +223,7 @@ model AdminUser {
 model AuditLog {
   id           Int               @id @default(autoincrement())
   actorId      Int?              @map("actor_id")
-  actorEmail   String            @map("actor_email")
+  actorUsername String           @map("actor_username")
   action       AuditAction
   resourceType AuditResourceType @map("resource_type")
   resourceId   Int?              @map("resource_id")

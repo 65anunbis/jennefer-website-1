@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "DeliveryType" AS ENUM ('in_person', 'zoom');
 
@@ -143,7 +146,8 @@ CREATE TABLE "testimonials" (
 CREATE TABLE "admin_users" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
+    "email" TEXT,
     "password_hash" TEXT NOT NULL,
     "role" "AdminRole" NOT NULL DEFAULT 'staff',
     "is_active" BOOLEAN NOT NULL DEFAULT true,
@@ -159,7 +163,7 @@ CREATE TABLE "admin_users" (
 CREATE TABLE "audit_log" (
     "id" SERIAL NOT NULL,
     "actor_id" INTEGER,
-    "actor_email" TEXT NOT NULL,
+    "actor_username" TEXT NOT NULL,
     "action" "AuditAction" NOT NULL,
     "resource_type" "AuditResourceType" NOT NULL,
     "resource_id" INTEGER,
@@ -205,6 +209,9 @@ CREATE INDEX "blog_posts_author_id_idx" ON "blog_posts"("author_id");
 
 -- CreateIndex
 CREATE INDEX "testimonials_service_id_idx" ON "testimonials"("service_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "admin_users_username_key" ON "admin_users"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "admin_users_email_key" ON "admin_users"("email");
