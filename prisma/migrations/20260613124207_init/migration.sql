@@ -11,13 +11,16 @@ CREATE TYPE "ClientPackageStatus" AS ENUM ('active', 'completed', 'cancelled');
 CREATE TYPE "BookingStatus" AS ENUM ('confirmed', 'completed', 'cancelled', 'no_show');
 
 -- CreateEnum
+CREATE TYPE "BlockType" AS ENUM ('vacation', 'training', 'team_event', 'personal', 'public_holiday', 'other');
+
+-- CreateEnum
 CREATE TYPE "AdminRole" AS ENUM ('admin', 'staff');
 
 -- CreateEnum
 CREATE TYPE "AuditAction" AS ENUM ('create', 'update', 'delete', 'view_sensitive');
 
 -- CreateEnum
-CREATE TYPE "AuditResourceType" AS ENUM ('client', 'client_package', 'booking', 'session_note', 'service', 'service_package', 'blog_post', 'testimonial', 'admin_user');
+CREATE TYPE "AuditResourceType" AS ENUM ('client', 'client_package', 'booking', 'calendar_block', 'venue', 'business_hours', 'session_note', 'service', 'service_package', 'blog_post', 'testimonial', 'admin_user');
 
 -- CreateTable
 CREATE TABLE "services" (
@@ -48,6 +51,22 @@ CREATE TABLE "service_packages" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "service_packages_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "venues" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "address" TEXT,
+    "color" TEXT,
+    "is_default" BOOLEAN NOT NULL DEFAULT false,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+    "notes" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "venues_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -86,14 +105,50 @@ CREATE TABLE "bookings" (
     "gcal_event_id" TEXT,
     "client_id" INTEGER NOT NULL,
     "client_package_id" INTEGER,
+    "venue_id" INTEGER,
+    "zoom_join_url" TEXT,
+    "delivery_type" "DeliveryType" NOT NULL,
     "scheduled_date" DATE NOT NULL,
     "scheduled_time" TIME(6) NOT NULL,
+    "duration_minutes" INTEGER NOT NULL,
     "status" "BookingStatus" NOT NULL DEFAULT 'confirmed',
     "booking_notes" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "bookings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "calendar_blocks" (
+    "id" SERIAL NOT NULL,
+    "block_type" "BlockType" NOT NULL,
+    "title" TEXT NOT NULL,
+    "start_date" DATE NOT NULL,
+    "end_date" DATE NOT NULL,
+    "all_day" BOOLEAN NOT NULL,
+    "start_time" TIME(6),
+    "end_time" TIME(6),
+    "notes" TEXT,
+    "venue_id" INTEGER,
+    "gcal_event_id" TEXT,
+    "created_by" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "calendar_blocks_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "business_hours" (
+    "id" SERIAL NOT NULL,
+    "day_of_week" INTEGER NOT NULL,
+    "start_time" TIME(6) NOT NULL,
+    "end_time" TIME(6) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "business_hours_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -193,7 +248,22 @@ CREATE INDEX "bookings_client_id_idx" ON "bookings"("client_id");
 CREATE INDEX "bookings_client_package_id_idx" ON "bookings"("client_package_id");
 
 -- CreateIndex
+CREATE INDEX "bookings_venue_id_idx" ON "bookings"("venue_id");
+
+-- CreateIndex
 CREATE INDEX "bookings_scheduled_date_idx" ON "bookings"("scheduled_date");
+
+-- CreateIndex
+CREATE INDEX "calendar_blocks_start_date_idx" ON "calendar_blocks"("start_date");
+
+-- CreateIndex
+CREATE INDEX "calendar_blocks_venue_id_idx" ON "calendar_blocks"("venue_id");
+
+-- CreateIndex
+CREATE INDEX "calendar_blocks_created_by_idx" ON "calendar_blocks"("created_by");
+
+-- CreateIndex
+CREATE INDEX "business_hours_day_of_week_idx" ON "business_hours"("day_of_week");
 
 -- CreateIndex
 CREATE INDEX "session_notes_client_id_idx" ON "session_notes"("client_id");
@@ -238,6 +308,15 @@ ALTER TABLE "bookings" ADD CONSTRAINT "bookings_client_id_fkey" FOREIGN KEY ("cl
 ALTER TABLE "bookings" ADD CONSTRAINT "bookings_client_package_id_fkey" FOREIGN KEY ("client_package_id") REFERENCES "client_packages"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "bookings" ADD CONSTRAINT "bookings_venue_id_fkey" FOREIGN KEY ("venue_id") REFERENCES "venues"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "calendar_blocks" ADD CONSTRAINT "calendar_blocks_venue_id_fkey" FOREIGN KEY ("venue_id") REFERENCES "venues"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "calendar_blocks" ADD CONSTRAINT "calendar_blocks_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "admin_users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "session_notes" ADD CONSTRAINT "session_notes_client_id_fkey" FOREIGN KEY ("client_id") REFERENCES "clients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -254,3 +333,4 @@ ALTER TABLE "testimonials" ADD CONSTRAINT "testimonials_service_id_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_actor_id_fkey" FOREIGN KEY ("actor_id") REFERENCES "admin_users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+

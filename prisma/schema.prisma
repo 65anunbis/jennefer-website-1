@@ -25,6 +25,15 @@ enum BookingStatus {
   no_show
 }
 
+enum BlockType {
+  vacation
+  training
+  team_event
+  personal
+  public_holiday
+  other
+}
+
 enum AdminRole {
   admin
   staff
@@ -41,6 +50,9 @@ enum AuditResourceType {
   client
   client_package
   booking
+  calendar_block
+  venue
+  business_hours
   session_note
   service
   service_package
@@ -83,6 +95,24 @@ model ServicePackage {
 
   @@index([serviceId])
   @@map("service_packages")
+}
+
+model Venue {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String?
+  color     String?
+  isDefault Boolean  @default(false) @map("is_default")
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0) @map("sort_order")
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  bookings       Booking[]
+  calendarBlocks CalendarBlock[]
+
+  @@map("venues")
 }
 
 model Client {
@@ -128,8 +158,12 @@ model Booking {
   gcalEventId     String?       @map("gcal_event_id")
   clientId        Int           @map("client_id")
   clientPackageId Int?          @map("client_package_id")
+  venueId         Int?          @map("venue_id")
+  zoomJoinUrl     String?       @map("zoom_join_url")
+  deliveryType    DeliveryType  @map("delivery_type")
   scheduledDate   DateTime      @map("scheduled_date") @db.Date
   scheduledTime   DateTime      @map("scheduled_time") @db.Time(6)
+  durationMinutes Int           @map("duration_minutes")
   status          BookingStatus @default(confirmed)
   bookingNotes    String?       @map("booking_notes")
   createdAt       DateTime      @default(now()) @map("created_at")
@@ -137,12 +171,51 @@ model Booking {
 
   client        Client         @relation(fields: [clientId], references: [id])
   clientPackage ClientPackage? @relation(fields: [clientPackageId], references: [id])
+  venue         Venue?         @relation(fields: [venueId], references: [id])
   sessionNotes  SessionNote[]
 
   @@index([clientId])
   @@index([clientPackageId])
+  @@index([venueId])
   @@index([scheduledDate])
   @@map("bookings")
+}
+
+model CalendarBlock {
+  id          Int       @id @default(autoincrement())
+  blockType   BlockType @map("block_type")
+  title       String
+  startDate   DateTime  @map("start_date") @db.Date
+  endDate     DateTime  @map("end_date") @db.Date
+  allDay      Boolean   @map("all_day")
+  startTime   DateTime? @map("start_time") @db.Time(6)
+  endTime     DateTime? @map("end_time") @db.Time(6)
+  notes       String?
+  venueId     Int?      @map("venue_id")
+  gcalEventId String?   @map("gcal_event_id")
+  createdBy   Int       @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  venue         Venue?    @relation(fields: [venueId], references: [id])
+  createdByUser AdminUser @relation(fields: [createdBy], references: [id])
+
+  @@index([startDate])
+  @@index([venueId])
+  @@index([createdBy])
+  @@map("calendar_blocks")
+}
+
+model BusinessHours {
+  id        Int      @id @default(autoincrement())
+  dayOfWeek Int      @map("day_of_week")
+  startTime DateTime @map("start_time") @db.Time(6)
+  endTime   DateTime @map("end_time") @db.Time(6)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([dayOfWeek])
+  @@map("business_hours")
 }
 
 model SessionNote {
@@ -213,9 +286,10 @@ model AdminUser {
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
-  sessionNotes SessionNote[]
-  blogPosts    BlogPost[]
-  auditLogs    AuditLog[]
+  sessionNotes   SessionNote[]
+  blogPosts      BlogPost[]
+  auditLogs      AuditLog[]
+  calendarBlocks CalendarBlock[]
 
   @@map("admin_users")
 }

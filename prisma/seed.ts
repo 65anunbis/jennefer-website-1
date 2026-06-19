@@ -43,13 +43,15 @@ async function main() {
   // 1. Clear everything (children first to respect FK constraints) -------
   await prisma.auditLog.deleteMany();
   await prisma.sessionNote.deleteMany();
+  await prisma.calendarBlock.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.clientPackage.deleteMany();
   await prisma.blogPost.deleteMany();
   await prisma.testimonial.deleteMany();
+  await prisma.businessHours.deleteMany();
   await prisma.client.deleteMany();
   await prisma.servicePackage.deleteMany();
-  await prisma.service.deleteMany();
+  await prisma.venue.deleteMany();
   await prisma.adminUser.deleteMany();
 
   // 2. Admin users -------------------------------------------------------
@@ -179,6 +181,34 @@ async function main() {
     (p) => p.deliveryType === "zoom" && p.durationMinutes === 60,
   )!;
 
+  // 3b. Venue + recurring business hours (plan §8) ----------------------
+  // One placeholder venue (fake address until the real one is supplied),
+  // used by in-person bookings and pushed to the GCal event `location`.
+  const mainVenue = await prisma.venue.create({
+    data: {
+      name: "Jennefer Wong Therapy",
+      address: "100 Cecil Street #12-01, Singapore 069532",
+      isDefault: true,
+      active: true,
+      sortOrder: 0,
+      notes: "Placeholder office address — replace with the real venue.",
+    },
+  });
+
+  // Recurring weekly working hours — drives cosmetic calendar shading only
+  // (NOT enforced). Interval model: one row per open interval; a day with no
+  // row is fully closed (Sunday). Seed: Mon–Fri 09:00–18:00, Sat 09:00–13:00.
+  await prisma.businessHours.createMany({
+    data: [
+      { dayOfWeek: 1, startTime: at(9), endTime: at(18) },
+      { dayOfWeek: 2, startTime: at(9), endTime: at(18) },
+      { dayOfWeek: 3, startTime: at(9), endTime: at(18) },
+      { dayOfWeek: 4, startTime: at(9), endTime: at(18) },
+      { dayOfWeek: 5, startTime: at(9), endTime: at(18) },
+      { dayOfWeek: 6, startTime: at(9), endTime: at(13) },
+    ],
+  });
+
   // 4. Synthetic clients, packages, bookings, notes ----------------------
 
   // Client A — 3-session hypnotherapy: 1 completed + 1 upcoming = 2 used, 1 left
@@ -204,8 +234,11 @@ async function main() {
     data: {
       clientId: amanda.id,
       clientPackageId: amandaPkg.id,
+      venueId: mainVenue.id,
+      deliveryType: "in_person",
       scheduledDate: day("2026-05-08"),
       scheduledTime: at(10, 0),
+      durationMinutes: 60,
       status: "completed",
       bookingNotes: "First trial session.",
     },
@@ -214,8 +247,11 @@ async function main() {
     data: {
       clientId: amanda.id,
       clientPackageId: amandaPkg.id,
+      venueId: mainVenue.id,
+      deliveryType: "in_person",
       scheduledDate: day("2026-06-20"),
       scheduledTime: at(10, 0),
+      durationMinutes: 60,
       status: "confirmed",
     },
   });
@@ -253,8 +289,11 @@ async function main() {
     data: {
       clientId: brandon.id,
       clientPackageId: brandonPkg.id,
+      venueId: mainVenue.id,
+      deliveryType: "in_person",
       scheduledDate: day("2026-04-20"),
       scheduledTime: at(15, 0),
+      durationMinutes: 60,
       status: "completed",
     },
   });
@@ -291,10 +330,13 @@ async function main() {
     data: {
       clientId: charmaine.id,
       clientPackageId: charmainePkg.id,
+      deliveryType: "zoom",
+      zoomJoinUrl: "to arrange manually",
       scheduledDate: day("2026-06-25"),
       scheduledTime: at(19, 0),
+      durationMinutes: 60,
       status: "confirmed",
-      bookingNotes: "Zoom link to be sent the day before.",
+      bookingNotes: "Zoom link to be arranged with the client.",
     },
   });
 
@@ -321,8 +363,11 @@ async function main() {
     data: {
       clientId: denise.id,
       clientPackageId: denisePkg.id,
+      venueId: mainVenue.id,
+      deliveryType: "in_person",
       scheduledDate: day("2026-05-27"),
       scheduledTime: at(11, 0),
+      durationMinutes: 60,
       status: "completed",
     },
   });
@@ -331,8 +376,11 @@ async function main() {
     data: {
       clientId: denise.id,
       clientPackageId: denisePkg.id,
+      venueId: mainVenue.id,
+      deliveryType: "in_person",
       scheduledDate: day("2026-06-03"),
       scheduledTime: at(11, 0),
+      durationMinutes: 60,
       status: "no_show",
       bookingNotes: "No-show, no advance notice. Session counted as consumed.",
     },
@@ -342,8 +390,11 @@ async function main() {
     data: {
       clientId: denise.id,
       clientPackageId: denisePkg.id,
+      venueId: mainVenue.id,
+      deliveryType: "in_person",
       scheduledDate: day("2026-06-09"),
       scheduledTime: at(11, 0),
+      durationMinutes: 60,
       status: "cancelled",
       bookingNotes: "Cancelled with notice; session freed back to package.",
     },
@@ -352,9 +403,39 @@ async function main() {
     data: {
       clientId: denise.id,
       clientPackageId: denisePkg.id,
+      venueId: mainVenue.id,
+      deliveryType: "in_person",
       scheduledDate: day("2026-06-18"),
       scheduledTime: at(11, 0),
+      durationMinutes: 60,
       status: "confirmed",
+    },
+  });
+
+  // 4b. Calendar blocks — non-client time (plan §8 calendar_blocks) ------
+  // Kept separate from bookings (no client/package/session math). All-day,
+  // multi-day vacation + a timed single-day training.
+  const vacationBlock = await prisma.calendarBlock.create({
+    data: {
+      blockType: "vacation",
+      title: "Bali retreat",
+      startDate: day("2026-06-29"),
+      endDate: day("2026-07-03"),
+      allDay: true,
+      notes: "Out of office — no sessions.",
+      createdBy: jennefer.id,
+    },
+  });
+  await prisma.calendarBlock.create({
+    data: {
+      blockType: "training",
+      title: "CPD workshop",
+      startDate: day("2026-06-24"),
+      endDate: day("2026-06-24"),
+      allDay: false,
+      startTime: at(9),
+      endTime: at(13),
+      createdBy: jennefer.id,
     },
   });
 
@@ -460,6 +541,24 @@ async function main() {
         ipAddress: "127.0.0.1",
       },
       {
+        actorId: jennefer.id,
+        actorUsername: jennefer.username,
+        action: "create",
+        resourceType: "venue",
+        resourceId: mainVenue.id,
+        summary: "Created venue: Jennefer Wong Therapy",
+        ipAddress: "127.0.0.1",
+      },
+      {
+        actorId: jennefer.id,
+        actorUsername: jennefer.username,
+        action: "create",
+        resourceType: "calendar_block",
+        resourceId: vacationBlock.id,
+        summary: "Created block: vacation",
+        ipAddress: "127.0.0.1",
+      },
+      {
         // Bulk view of a client's notes → logged against the client (no single
         // note is the target). See plan §10 resource_id convention.
         actorId: jennefer.id,
@@ -477,8 +576,11 @@ async function main() {
   console.log(`  admin users:      ${[defaultAdmin, jennefer, staff].length}`);
   console.log("  services:         2 (Hypnotherapy, Tarot Clarity)");
   console.log("  service packages: 6");
+  console.log("  venues:           1 (placeholder)");
+  console.log("  business hours:   6 rows (Mon–Fri 9–18, Sat 9–13)");
   console.log("  clients:          4");
-  console.log("  bookings:         8 (confirmed / completed / no_show / cancelled)");
+  console.log("  bookings:         8 (confirmed / completed / no_show / cancelled; 1 Zoom)");
+  console.log("  calendar blocks:  2 (vacation, training)");
   console.log("  testimonials:     4 (3 visible, 1 hidden)");
   console.log("  blog posts:       2 (1 published, 1 draft)");
   console.log("Done.");
