@@ -63,6 +63,14 @@ export default async function AdminDashboard({
               </li>
               <li>
                 <Link
+                  href="/admin/venues"
+                  className="text-neutral-900 underline underline-offset-2"
+                >
+                  Venues (admin only)
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/admin/users"
                   className="text-neutral-900 underline underline-offset-2"
                 >

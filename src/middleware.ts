@@ -9,6 +9,8 @@ import { NextResponse } from "next/server";
 const ADMIN_ONLY_PREFIXES = [
   "/admin/users",
   "/admin/services",
+  "/admin/venues",
+  "/admin/business-hours",
   "/admin/audit-log",
 ];
 
