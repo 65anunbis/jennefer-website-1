@@ -59,14 +59,14 @@ export default async function BlocksPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
               <th className="px-4 py-3 font-medium">When (SGT)</th>
-              <th className="px-4 py-3 font-medium">Type</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Type</th>
               <th className="px-4 py-3 font-medium">Title</th>
-              <th className="px-4 py-3 font-medium">Venue</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Venue</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -74,11 +74,11 @@ export default async function BlocksPage() {
             {blocks.map((b) => (
               <tr key={b.id}>
                 <td className="px-4 py-3">{whenLabel(b)}</td>
-                <td className="px-4 py-3">
+                <td className="hidden px-4 py-3 sm:table-cell">
                   {BLOCK_TYPE_LABELS[b.blockType] ?? b.blockType}
                 </td>
                 <td className="px-4 py-3 font-medium">{b.title}</td>
-                <td className="px-4 py-3">{b.venue?.name ?? "—"}</td>
+                <td className="hidden px-4 py-3 sm:table-cell">{b.venue?.name ?? "—"}</td>
                 <td className="px-4 py-3 text-right">
                   <Link
                     href={`/admin/blocks/${b.id}`}

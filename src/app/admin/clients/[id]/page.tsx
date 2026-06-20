@@ -107,7 +107,7 @@ export default async function ClientDetailPage({
           </Link>
         </div>
 
-        <div className="mt-3 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+        <div className="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
               <tr>
@@ -174,7 +174,7 @@ export default async function ClientDetailPage({
       {/* Booking history (read-only; managed from the Bookings module) ------ */}
       <section className="mt-8">
         <h2 className="text-lg font-semibold">Booking history</h2>
-        <div className="mt-3 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+        <div className="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
               <tr>

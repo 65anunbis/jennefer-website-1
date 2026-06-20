@@ -39,16 +39,16 @@ export default async function UsersPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
               <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Username</th>
-              <th className="px-4 py-3 font-medium">Email</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Username</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Email</th>
               <th className="px-4 py-3 font-medium">Role</th>
               <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Last login</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Last login</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -66,8 +66,8 @@ export default async function UsersPage() {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3">{u.username}</td>
-                <td className="px-4 py-3">{u.email ?? "—"}</td>
+                <td className="hidden px-4 py-3 sm:table-cell">{u.username}</td>
+                <td className="hidden px-4 py-3 sm:table-cell">{u.email ?? "—"}</td>
                 <td className="px-4 py-3 capitalize">{u.role}</td>
                 <td className="px-4 py-3">
                   {u.isActive ? (
@@ -76,7 +76,7 @@ export default async function UsersPage() {
                     <span>Inactive</span>
                   )}
                 </td>
-                <td className="px-4 py-3">{formatDate(u.lastLoginAt)}</td>
+                <td className="hidden px-4 py-3 sm:table-cell">{formatDate(u.lastLoginAt)}</td>
                 <td className="px-4 py-3 text-right">
                   <Link
                     href={`/admin/users/${u.id}`}

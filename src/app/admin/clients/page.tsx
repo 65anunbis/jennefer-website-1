@@ -32,15 +32,15 @@ export default async function ClientsPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
               <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">WhatsApp</th>
-              <th className="px-4 py-3 font-medium">Email</th>
-              <th className="px-4 py-3 font-medium">Packages</th>
-              <th className="px-4 py-3 font-medium">Bookings</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Email</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Packages</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Bookings</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -49,9 +49,9 @@ export default async function ClientsPage() {
               <tr key={c.id}>
                 <td className="px-4 py-3 font-medium">{c.name}</td>
                 <td className="px-4 py-3">{formatWhatsappDisplay(c.whatsappNumber)}</td>
-                <td className="px-4 py-3">{c.email ?? "—"}</td>
-                <td className="px-4 py-3">{c._count.clientPackages}</td>
-                <td className="px-4 py-3">{c._count.bookings}</td>
+                <td className="hidden px-4 py-3 sm:table-cell">{c.email ?? "—"}</td>
+                <td className="hidden px-4 py-3 sm:table-cell">{c._count.clientPackages}</td>
+                <td className="hidden px-4 py-3 sm:table-cell">{c._count.bookings}</td>
                 <td className="px-4 py-3 text-right">
                   <Link
                     href={`/admin/clients/${c.id}`}

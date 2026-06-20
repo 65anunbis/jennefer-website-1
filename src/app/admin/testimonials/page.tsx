@@ -31,14 +31,14 @@ export default async function TestimonialsPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
-              <th className="px-4 py-3 font-medium">Order</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Order</th>
               <th className="px-4 py-3 font-medium">Client</th>
-              <th className="px-4 py-3 font-medium">Service</th>
-              <th className="px-4 py-3 font-medium">Quote</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Service</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Quote</th>
               <th className="px-4 py-3 font-medium">Visible</th>
               <th className="px-4 py-3" />
             </tr>
@@ -46,10 +46,10 @@ export default async function TestimonialsPage() {
           <tbody className="divide-y divide-neutral-100">
             {testimonials.map((t) => (
               <tr key={t.id} className={t.visible ? "" : "text-neutral-400"}>
-                <td className="px-4 py-3">{t.sortOrder}</td>
+                <td className="hidden px-4 py-3 sm:table-cell">{t.sortOrder}</td>
                 <td className="px-4 py-3">{t.clientName}</td>
-                <td className="px-4 py-3">{t.service?.name ?? "—"}</td>
-                <td className="max-w-xs truncate px-4 py-3" title={t.quote}>
+                <td className="hidden px-4 py-3 sm:table-cell">{t.service?.name ?? "—"}</td>
+                <td className="hidden max-w-xs truncate px-4 py-3 sm:table-cell" title={t.quote}>
                   {t.quote}
                 </td>
                 <td className="px-4 py-3">

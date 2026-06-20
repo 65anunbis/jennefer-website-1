@@ -85,10 +85,10 @@ export default async function ServicesPage() {
                 <thead className="border-b border-neutral-100 text-neutral-500">
                   <tr>
                     <th className="px-4 py-2 font-medium">Package</th>
-                    <th className="px-4 py-2 font-medium">Price</th>
-                    <th className="px-4 py-2 font-medium">Duration</th>
+                    <th className="hidden px-4 py-2 font-medium sm:table-cell">Price</th>
+                    <th className="hidden px-4 py-2 font-medium sm:table-cell">Duration</th>
                     <th className="px-4 py-2 font-medium">Sessions</th>
-                    <th className="px-4 py-2 font-medium">Delivery</th>
+                    <th className="hidden px-4 py-2 font-medium sm:table-cell">Delivery</th>
                     <th className="px-4 py-2" />
                   </tr>
                 </thead>
@@ -101,10 +101,10 @@ export default async function ServicesPage() {
                           <span className="ml-2 text-xs">(inactive)</span>
                         )}
                       </td>
-                      <td className="px-4 py-2">{formatPrice(p.priceSgd)}</td>
-                      <td className="px-4 py-2">{p.durationMinutes} min</td>
+                      <td className="hidden px-4 py-2 sm:table-cell">{formatPrice(p.priceSgd)}</td>
+                      <td className="hidden px-4 py-2 sm:table-cell">{p.durationMinutes} min</td>
                       <td className="px-4 py-2">{p.sessionsCount}</td>
-                      <td className="px-4 py-2">
+                      <td className="hidden px-4 py-2 sm:table-cell">
                         {deliveryLabel[p.deliveryType] ?? p.deliveryType}
                       </td>
                       <td className="px-4 py-2 text-right">

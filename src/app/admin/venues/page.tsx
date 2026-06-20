@@ -30,14 +30,14 @@ export default async function VenuesPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
-              <th className="px-4 py-3 font-medium">Order</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Order</th>
               <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Address</th>
-              <th className="px-4 py-3 font-medium">Default</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Address</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Default</th>
               <th className="px-4 py-3 font-medium">Active</th>
               <th className="px-4 py-3" />
             </tr>
@@ -45,12 +45,12 @@ export default async function VenuesPage() {
           <tbody className="divide-y divide-neutral-100">
             {venues.map((v) => (
               <tr key={v.id} className={v.active ? "" : "text-neutral-400"}>
-                <td className="px-4 py-3">{v.sortOrder}</td>
+                <td className="hidden px-4 py-3 sm:table-cell">{v.sortOrder}</td>
                 <td className="px-4 py-3 font-medium">{v.name}</td>
-                <td className="max-w-xs truncate px-4 py-3" title={v.address ?? ""}>
+                <td className="hidden max-w-xs truncate px-4 py-3 sm:table-cell" title={v.address ?? ""}>
                   {v.address ?? "—"}
                 </td>
-                <td className="px-4 py-3">
+                <td className="hidden px-4 py-3 sm:table-cell">
                   {v.isDefault ? (
                     <span className="text-green-700">Default</span>
                   ) : (
