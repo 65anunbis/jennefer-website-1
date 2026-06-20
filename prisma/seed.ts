@@ -42,6 +42,7 @@ async function main() {
 
   // 1. Clear everything (children first to respect FK constraints) -------
   await prisma.auditLog.deleteMany();
+  await prisma.gcalSyncFailure.deleteMany();
   await prisma.sessionNote.deleteMany();
   await prisma.calendarBlock.deleteMany();
   await prisma.booking.deleteMany();
@@ -62,8 +63,8 @@ async function main() {
     data: {
       name: "Default Admin",
       username: "admin",
-      email: "admin@jenneferwong.sg",
-      passwordHash: await bcrypt.hash("ChangeMe123!", SALT_ROUNDS),
+      email: "admin@jenneferwong.com",
+      passwordHash: await bcrypt.hash("bw21ChangeMe123!", SALT_ROUNDS),
       role: "admin",
       isActive: true,
       mustChangePassword: true,
@@ -74,8 +75,8 @@ async function main() {
     data: {
       name: "Jennefer Wong",
       username: "jennefer.wong",
-      email: "jennefer@jenneferwong.sg",
-      passwordHash: await bcrypt.hash("DevAdmin123!", SALT_ROUNDS),
+      email: "jennefer@jenneferwong.com",
+      passwordHash: await bcrypt.hash("bw21DevAdmin123!", SALT_ROUNDS),
       role: "admin",
       isActive: true,
       mustChangePassword: false,
@@ -87,8 +88,8 @@ async function main() {
     data: {
       name: "Reception Staff",
       username: "reception",
-      email: "staff@jenneferwong.sg",
-      passwordHash: await bcrypt.hash("DevStaff123!", SALT_ROUNDS),
+      email: "staff@jenneferwong.com",
+      passwordHash: await bcrypt.hash("bw21DevStaff123!", SALT_ROUNDS),
       role: "staff",
       isActive: true,
       mustChangePassword: false,
@@ -228,6 +229,10 @@ async function main() {
       pricePaidSgd: "405.00",
       purchasedDate: day("2026-05-01"),
       status: "active",
+      paid: true,
+      paymentMode: "paynow",
+      paidDate: day("2026-05-01"),
+      createdBy: jennefer.id,
     },
   });
   const amandaBooking1 = await prisma.booking.create({
@@ -283,6 +288,10 @@ async function main() {
       pricePaidSgd: "150.00",
       purchasedDate: day("2026-04-15"),
       status: "completed",
+      paid: true,
+      paymentMode: "cash",
+      paidDate: day("2026-04-15"),
+      createdBy: jennefer.id,
     },
   });
   const brandonBooking = await prisma.booking.create({
@@ -324,9 +333,11 @@ async function main() {
       pricePaidSgd: "70.00",
       purchasedDate: day("2026-06-10"),
       status: "active",
+      paid: false, // unpaid example — exercises the not-yet-paid state
+      createdBy: staff.id, // recorded by reception, not Jennefer
     },
   });
-  await prisma.booking.create({
+  const charmaineBooking = await prisma.booking.create({
     data: {
       clientId: charmaine.id,
       clientPackageId: charmainePkg.id,
@@ -357,6 +368,10 @@ async function main() {
       pricePaidSgd: "765.00",
       purchasedDate: day("2026-05-20"),
       status: "active",
+      paid: true,
+      paymentMode: "bank_transfer",
+      paidDate: day("2026-05-20"),
+      createdBy: jennefer.id,
     },
   });
   await prisma.booking.create({
@@ -413,8 +428,9 @@ async function main() {
   });
 
   // 4b. Calendar blocks — non-client time (plan §8 calendar_blocks) ------
-  // Kept separate from bookings (no client/package/session math). All-day,
-  // multi-day vacation + a timed single-day training.
+  // Kept separate from bookings (no client/package/session math). One row per
+  // block_type so every variant is visible in the calendar logic: all-day
+  // multi-day, timed single-day, and a venue-specific block.
   const vacationBlock = await prisma.calendarBlock.create({
     data: {
       blockType: "vacation",
@@ -436,6 +452,83 @@ async function main() {
       startTime: at(9),
       endTime: at(13),
       createdBy: jennefer.id,
+    },
+  });
+  await prisma.calendarBlock.create({
+    data: {
+      blockType: "team_event",
+      title: "Team lunch & planning",
+      startDate: day("2026-07-10"),
+      endDate: day("2026-07-10"),
+      allDay: false,
+      startTime: at(12),
+      endTime: at(15),
+      notes: "Quarterly team catch-up.",
+      createdBy: jennefer.id,
+    },
+  });
+  await prisma.calendarBlock.create({
+    data: {
+      blockType: "personal",
+      title: "Dental appointment",
+      startDate: day("2026-07-08"),
+      endDate: day("2026-07-08"),
+      allDay: false,
+      startTime: at(14),
+      endTime: at(15),
+      createdBy: jennefer.id,
+    },
+  });
+  await prisma.calendarBlock.create({
+    data: {
+      blockType: "public_holiday",
+      title: "National Day",
+      startDate: day("2026-08-09"),
+      endDate: day("2026-08-09"),
+      allDay: true,
+      notes: "Singapore public holiday — layered over weekly business hours.",
+      createdBy: jennefer.id,
+    },
+  });
+  await prisma.calendarBlock.create({
+    data: {
+      blockType: "other",
+      title: "Office renovation",
+      startDate: day("2026-07-15"),
+      endDate: day("2026-07-16"),
+      allDay: true,
+      venueId: mainVenue.id, // venue-specific block (room/venue closure)
+      notes: "Venue unavailable — repainting.",
+      createdBy: jennefer.id,
+    },
+  });
+
+  // 4c. GCal sync failures — the fail-soft retry queue (plan §8/§12) -----
+  // A failed GCal push writes a row here (the booking/block still saved to
+  // Postgres). EOD/SOD sweeps + a per-booking "Retry calendar sync" button
+  // retry these; a successful retry sets resolved=true. Seed one unresolved
+  // (needs retry) and one already-resolved so both states are visible.
+  await prisma.gcalSyncFailure.create({
+    data: {
+      resourceType: "booking",
+      resourceId: charmaineBooking.id,
+      operation: "create",
+      attempts: 1,
+      lastError: "Google Calendar API timeout (stub) — booking saved, mirror push failed.",
+      lastAttemptAt: day("2026-06-10"),
+      resolved: false,
+    },
+  });
+  await prisma.gcalSyncFailure.create({
+    data: {
+      resourceType: "calendar_block",
+      resourceId: vacationBlock.id,
+      operation: "create",
+      attempts: 2,
+      lastError: "Transient 503 from Google — succeeded on retry.",
+      lastAttemptAt: day("2026-06-11"),
+      resolved: true,
+      resolvedAt: day("2026-06-11"),
     },
   });
 
@@ -580,7 +673,8 @@ async function main() {
   console.log("  business hours:   6 rows (Mon–Fri 9–18, Sat 9–13)");
   console.log("  clients:          4");
   console.log("  bookings:         8 (confirmed / completed / no_show / cancelled; 1 Zoom)");
-  console.log("  calendar blocks:  2 (vacation, training)");
+  console.log("  calendar blocks:  6 (one per block_type)");
+  console.log("  gcal sync fails:  2 (1 unresolved, 1 resolved)");
   console.log("  testimonials:     4 (3 visible, 1 hidden)");
   console.log("  blog posts:       2 (1 published, 1 draft)");
   console.log("Done.");

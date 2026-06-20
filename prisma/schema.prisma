@@ -18,6 +18,13 @@ enum ClientPackageStatus {
   cancelled
 }
 
+enum PaymentMode {
+  paynow
+  bank_transfer
+  cash
+  credit_card
+}
+
 enum BookingStatus {
   confirmed
   completed
@@ -59,6 +66,17 @@ enum AuditResourceType {
   blog_post
   testimonial
   admin_user
+}
+
+enum GcalSyncResource {
+  booking
+  calendar_block
+}
+
+enum GcalSyncOperation {
+  create
+  update
+  delete
 }
 
 model Service {
@@ -140,16 +158,22 @@ model ClientPackage {
   pricePaidSgd  Decimal             @map("price_paid_sgd") @db.Decimal(10, 2)
   purchasedDate DateTime            @map("purchased_date") @db.Date
   status        ClientPackageStatus @default(active)
+  paid          Boolean             @default(false)
+  paymentMode   PaymentMode         @default(paynow) @map("payment_mode")
+  paidDate      DateTime?           @map("paid_date") @db.Date
+  createdBy     Int                 @map("created_by")
   notes         String?
   createdAt     DateTime            @default(now()) @map("created_at")
   updatedAt     DateTime            @updatedAt @map("updated_at")
 
-  client   Client         @relation(fields: [clientId], references: [id])
-  package  ServicePackage @relation(fields: [packageId], references: [id])
-  bookings Booking[]
+  client        Client         @relation(fields: [clientId], references: [id])
+  package       ServicePackage @relation(fields: [packageId], references: [id])
+  createdByUser AdminUser      @relation(fields: [createdBy], references: [id])
+  bookings      Booking[]
 
   @@index([clientId])
   @@index([packageId])
+  @@index([createdBy])
   @@map("client_packages")
 }
 
@@ -218,6 +242,24 @@ model BusinessHours {
   @@map("business_hours")
 }
 
+model GcalSyncFailure {
+  id            Int               @id @default(autoincrement())
+  resourceType  GcalSyncResource  @map("resource_type")
+  resourceId    Int               @map("resource_id")
+  operation     GcalSyncOperation
+  attempts      Int               @default(0)
+  lastError     String?           @map("last_error")
+  lastAttemptAt DateTime?         @map("last_attempt_at")
+  resolved      Boolean           @default(false)
+  resolvedAt    DateTime?         @map("resolved_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  @@index([resolved])
+  @@index([resourceType, resourceId])
+  @@map("gcal_sync_failures")
+}
+
 model SessionNote {
   id        Int      @id @default(autoincrement())
   clientId  Int      @map("client_id")
@@ -282,6 +324,8 @@ model AdminUser {
   role               AdminRole @default(staff)
   isActive           Boolean   @default(true) @map("is_active")
   mustChangePassword Boolean   @default(false) @map("must_change_password")
+  failedLoginAttempts Int      @default(0) @map("failed_login_attempts")
+  lockedUntil        DateTime? @map("locked_until")
   lastLoginAt        DateTime? @map("last_login_at")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
@@ -290,6 +334,7 @@ model AdminUser {
   blogPosts      BlogPost[]
   auditLogs      AuditLog[]
   calendarBlocks CalendarBlock[]
+  clientPackages ClientPackage[]
 
   @@map("admin_users")
 }
