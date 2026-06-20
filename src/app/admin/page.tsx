@@ -71,6 +71,14 @@ export default async function AdminDashboard({
               </li>
               <li>
                 <Link
+                  href="/admin/business-hours"
+                  className="text-neutral-900 underline underline-offset-2"
+                >
+                  Business hours (admin only)
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/admin/users"
                   className="text-neutral-900 underline underline-offset-2"
                 >
