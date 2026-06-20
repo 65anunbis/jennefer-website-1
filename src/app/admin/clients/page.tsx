@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
 import { formatWhatsappDisplay } from "@/lib/phone";
+import { sessionsRemaining } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,16 @@ export default async function ClientsPage() {
   await requireUser();
   const clients = await prisma.client.findMany({
     orderBy: { name: "asc" },
-    include: { _count: { select: { clientPackages: true, bookings: true } } },
+    include: {
+      _count: { select: { clientPackages: true } },
+      clientPackages: {
+        select: {
+          sessionsTotal: true,
+          status: true,
+          bookings: { select: { status: true } },
+        },
+      },
+    },
   });
 
   return (
@@ -40,28 +50,43 @@ export default async function ClientsPage() {
               <th className="px-4 py-3 font-medium">WhatsApp</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Email</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Packages</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Bookings</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Bookings unused</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
-            {clients.map((c) => (
-              <tr key={c.id}>
-                <td className="px-4 py-3 font-medium">{c.name}</td>
-                <td className="px-4 py-3">{formatWhatsappDisplay(c.whatsappNumber)}</td>
-                <td className="hidden px-4 py-3 sm:table-cell">{c.email ?? "—"}</td>
-                <td className="hidden px-4 py-3 sm:table-cell">{c._count.clientPackages}</td>
-                <td className="hidden px-4 py-3 sm:table-cell">{c._count.bookings}</td>
-                <td className="px-4 py-3 text-right">
-                  <Link
-                    href={`/admin/clients/${c.id}`}
-                    className="underline underline-offset-2"
-                  >
-                    View
-                  </Link>
-                </td>
-              </tr>
-            ))}
+            {clients.map((c) => {
+              // Unused = sessions still available to book: summed remaining
+              // across non-cancelled packages (cancelled bookings free a session).
+              const unused = c.clientPackages
+                .filter((p) => p.status !== "cancelled")
+                .reduce(
+                  (sum, p) =>
+                    sum +
+                    sessionsRemaining(
+                      p.sessionsTotal,
+                      p.bookings.map((b) => b.status),
+                    ),
+                  0,
+                );
+              return (
+                <tr key={c.id}>
+                  <td className="px-4 py-3 font-medium">{c.name}</td>
+                  <td className="px-4 py-3">{formatWhatsappDisplay(c.whatsappNumber)}</td>
+                  <td className="hidden px-4 py-3 sm:table-cell">{c.email ?? "—"}</td>
+                  <td className="hidden px-4 py-3 sm:table-cell">{c._count.clientPackages}</td>
+                  <td className="hidden px-4 py-3 sm:table-cell">{unused}</td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      href={`/admin/clients/${c.id}`}
+                      className="underline underline-offset-2"
+                    >
+                      View
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
             {clients.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-neutral-500">

@@ -23,6 +23,14 @@ const STATUS_LABELS: Record<string, string> = {
   no_show: "No-show",
 };
 
+// Booking-history row shading by status (plan UI request 2026-06-20).
+const BOOKING_ROW_CLASS: Record<string, string> = {
+  cancelled: "bg-neutral-200 text-black",
+  completed: "bg-green-100 text-black",
+  confirmed: "bg-green-100 font-bold text-blue-700",
+  no_show: "bg-green-100 font-bold text-red-700",
+};
+
 export default async function ClientDetailPage({
   params,
 }: {
@@ -186,7 +194,7 @@ export default async function ClientDetailPage({
             </thead>
             <tbody className="divide-y divide-neutral-100">
               {client.bookings.map((b) => (
-                <tr key={b.id}>
+                <tr key={b.id} className={BOOKING_ROW_CLASS[b.status] ?? ""}>
                   <td className="px-4 py-3">
                     {formatDateTimeSGT(b.scheduledDate, b.scheduledTime)}
                   </td>
