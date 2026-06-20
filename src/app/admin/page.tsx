@@ -45,6 +45,14 @@ export default async function AdminDashboard({
           </li>
           <li>
             <Link
+              href="/admin/blocks"
+              className="text-neutral-900 underline underline-offset-2"
+            >
+              Calendar blocks
+            </Link>
+          </li>
+          <li>
+            <Link
               href="/admin/testimonials"
               className="text-neutral-900 underline underline-offset-2"
             >
