@@ -52,6 +52,7 @@ async function main() {
   await prisma.businessHours.deleteMany();
   await prisma.client.deleteMany();
   await prisma.servicePackage.deleteMany();
+  await prisma.service.deleteMany();
   await prisma.venue.deleteMany();
   await prisma.adminUser.deleteMany();
 
