@@ -28,7 +28,8 @@ export default async function ClientDetailPage({
 }: {
   params: { id: string };
 }) {
-  await requireUser();
+  const user = await requireUser();
+  const isAdmin = user.role === "admin";
 
   const id = Number(params.id);
   if (!Number.isInteger(id)) notFound();
@@ -55,6 +56,11 @@ export default async function ClientDetailPage({
     },
   });
   if (!client) notFound();
+
+  // Session notes are admin-only; staff never see them (not even the count).
+  const sessionNoteCount = isAdmin
+    ? await prisma.sessionNote.count({ where: { clientId: id } })
+    : 0;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -211,13 +217,22 @@ export default async function ClientDetailPage({
         </div>
       </section>
 
-      {/* Session notes (admin only) — built in 4.3c ------------------------- */}
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold">Session notes</h2>
-        <p className="mt-2 text-sm text-neutral-400">
-          Session notes appear here (built next; admin only).
-        </p>
-      </section>
+      {/* Session notes (admin only; staff don't see this section at all) ---- */}
+      {isAdmin && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold">Session notes</h2>
+          <p className="mt-2 text-sm text-neutral-600">
+            {sessionNoteCount} note{sessionNoteCount === 1 ? "" : "s"} on record.{" "}
+            <Link
+              href={`/admin/clients/${client.id}/notes`}
+              className="underline underline-offset-2"
+            >
+              View session notes
+            </Link>{" "}
+            <span className="text-neutral-400">(confidential — access is audited)</span>
+          </p>
+        </section>
+      )}
     </main>
   );
 }
