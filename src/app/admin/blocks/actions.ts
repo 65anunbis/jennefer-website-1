@@ -166,7 +166,7 @@ export async function updateBlock(
   redirect("/admin/blocks");
 }
 
-export async function deleteBlock(id: number, _formData: FormData): Promise<void> {
+export async function deleteBlock(id: number): Promise<void> {
   await requireUser();
 
   const target = await prisma.calendarBlock.findUnique({ where: { id } });
