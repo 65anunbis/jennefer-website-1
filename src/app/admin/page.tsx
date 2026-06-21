@@ -37,6 +37,14 @@ export default async function AdminDashboard({
         <ul className="grid gap-2 text-sm">
           <li>
             <Link
+              href="/admin/bookings"
+              className="text-neutral-900 underline underline-offset-2"
+            >
+              Bookings
+            </Link>
+          </li>
+          <li>
+            <Link
               href="/admin/clients"
               className="text-neutral-900 underline underline-offset-2"
             >
