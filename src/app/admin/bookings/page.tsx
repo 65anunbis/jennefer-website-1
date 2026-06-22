@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
 import { formatDateSGT, formatTimeSGT } from "@/lib/datetime";
+import { formatWhatsappDisplay } from "@/lib/phone";
 import { bookingInterval, minutesOfTime, rangesOverlap } from "@/lib/overlap";
 
 export const dynamic = "force-dynamic";
@@ -21,14 +22,14 @@ const ROW_CLASS: Record<string, string> = {
   no_show: "bg-green-100 text-red-700",
 };
 
-const COLSPAN = 6;
+const COLSPAN = 7;
 
 export default async function BookingsPage() {
   await requireUser();
   const bookings = await prisma.booking.findMany({
     orderBy: [{ scheduledDate: "desc" }, { scheduledTime: "desc" }],
     include: {
-      client: { select: { name: true } },
+      client: { select: { name: true, whatsappNumber: true } },
       venue: { select: { name: true } },
       clientPackage: {
         include: { package: { include: { service: true } } },
@@ -112,6 +113,7 @@ export default async function BookingsPage() {
             <tr>
               <th className="px-4 py-3 font-medium">Time (SGT)</th>
               <th className="px-4 py-3 font-medium">Client</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">WhatsApp</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Delivery</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Package</th>
@@ -142,6 +144,9 @@ export default async function BookingsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 font-medium">{b.client.name}</td>
+                  <td className="hidden px-4 py-3 sm:table-cell">
+                    {formatWhatsappDisplay(b.client.whatsappNumber)}
+                  </td>
                   <td className="px-4 py-3">
                     {STATUS_LABELS[b.status] ?? b.status}
                   </td>
