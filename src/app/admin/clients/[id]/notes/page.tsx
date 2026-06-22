@@ -46,7 +46,7 @@ export default async function SessionNotesPage({
         <div>
           <Link
             href={`/admin/clients/${clientId}`}
-            className="text-sm text-neutral-500 underline underline-offset-2"
+            className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
           >
             ← {client.name}
           </Link>
