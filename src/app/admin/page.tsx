@@ -3,6 +3,56 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 
+type Item = { href: string; label: string; desc: string };
+
+const STAFF_ITEMS: Item[] = [
+  { href: "/admin/bookings", label: "Bookings", desc: "Calendar, day view and booking list" },
+  { href: "/admin/clients", label: "Clients", desc: "Directory, packages and session notes" },
+  { href: "/admin/blocks", label: "Calendar blocks", desc: "Vacation, training, public holidays" },
+  { href: "/admin/testimonials", label: "Testimonials", desc: "Show or hide client quotes" },
+  { href: "/admin/change-password", label: "Change password", desc: "Update your login password" },
+];
+
+const ADMIN_ITEMS: Item[] = [
+  { href: "/admin/services", label: "Services & pricing", desc: "Edit services and package prices" },
+  { href: "/admin/venues", label: "Venues", desc: "Session locations" },
+  { href: "/admin/business-hours", label: "Business hours", desc: "Weekly working hours" },
+  { href: "/admin/users", label: "User management", desc: "Add or edit admin and staff logins" },
+];
+
+function MenuCard({ item }: { item: Item }) {
+  return (
+    <Link
+      href={item.href}
+      className="group rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-neutral-300 hover:shadow"
+    >
+      <p className="font-medium text-neutral-900">
+        {item.label}
+        <span className="text-neutral-300 transition group-hover:text-neutral-500">
+          {" "}
+          ›
+        </span>
+      </p>
+      <p className="mt-0.5 text-sm text-neutral-500">{item.desc}</p>
+    </Link>
+  );
+}
+
+function Section({ title, items }: { title: string; items: Item[] }) {
+  return (
+    <section className="mt-8">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        {title}
+      </h2>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        {items.map((item) => (
+          <MenuCard key={item.href} item={item} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default async function AdminDashboard({
   searchParams,
 }: {
@@ -30,89 +80,8 @@ export default async function AdminDashboard({
         </p>
       )}
 
-      <section className="mt-8 grid gap-3">
-        <p className="text-sm text-neutral-600">
-          Admin modules will appear here as they are built.
-        </p>
-        <ul className="grid gap-2 text-sm">
-          <li>
-            <Link
-              href="/admin/bookings"
-              className="text-neutral-900 underline underline-offset-2"
-            >
-              Bookings
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/admin/clients"
-              className="text-neutral-900 underline underline-offset-2"
-            >
-              Clients
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/admin/blocks"
-              className="text-neutral-900 underline underline-offset-2"
-            >
-              Calendar blocks
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/admin/testimonials"
-              className="text-neutral-900 underline underline-offset-2"
-            >
-              Testimonials
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/admin/change-password"
-              className="text-neutral-900 underline underline-offset-2"
-            >
-              Change password
-            </Link>
-          </li>
-          {isAdmin && (
-            <>
-              <li>
-                <Link
-                  href="/admin/services"
-                  className="text-neutral-900 underline underline-offset-2"
-                >
-                  Services &amp; pricing (admin only)
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/venues"
-                  className="text-neutral-900 underline underline-offset-2"
-                >
-                  Venues (admin only)
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/business-hours"
-                  className="text-neutral-900 underline underline-offset-2"
-                >
-                  Business hours (admin only)
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/users"
-                  className="text-neutral-900 underline underline-offset-2"
-                >
-                  User management (admin only)
-                </Link>
-              </li>
-            </>
-          )}
-        </ul>
-      </section>
+      <Section title="Staff" items={STAFF_ITEMS} />
+      {isAdmin && <Section title="Admin only" items={ADMIN_ITEMS} />}
     </main>
   );
 }
