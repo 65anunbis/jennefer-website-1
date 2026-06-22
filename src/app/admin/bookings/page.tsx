@@ -12,6 +12,7 @@ import {
   monthParam,
   parseMonthParam,
 } from "@/lib/calendar";
+import { bookingInterval, minutesOfTime, rangesOverlap } from "@/lib/overlap";
 import { ViewToggle } from "./ViewToggle";
 
 export const dynamic = "force-dynamic";
@@ -41,11 +42,18 @@ export default async function BookingsCalendarPage({
         scheduledDate: { gte: startDate, lte: endDate },
         status: { not: "cancelled" },
       },
-      select: { scheduledDate: true },
+      select: { scheduledDate: true, scheduledTime: true, durationMinutes: true },
     }),
     prisma.calendarBlock.findMany({
       where: { startDate: { lte: endDate }, endDate: { gte: startDate } },
-      select: { startDate: true, endDate: true, title: true },
+      select: {
+        startDate: true,
+        endDate: true,
+        title: true,
+        allDay: true,
+        startTime: true,
+        endTime: true,
+      },
     }),
     prisma.businessHours.findMany({ select: { dayOfWeek: true } }),
   ]);
@@ -64,6 +72,51 @@ export default async function BookingsCalendarPage({
 
   // A weekday with no business_hours row is fully closed (e.g. Sunday).
   const openDows = new Set(hours.map((h) => h.dayOfWeek));
+
+  // Days with a collision: a non-cancelled booking overlapping another booking
+  // or a block on the same date (same rule as the list/day views).
+  const bookingIvsByIso = new Map<string, { startMin: number; endMin: number }[]>();
+  for (const b of counted) {
+    const iso = isoOfDate(b.scheduledDate);
+    const list = bookingIvsByIso.get(iso) ?? [];
+    list.push(bookingInterval(minutesOfTime(b.scheduledTime), b.durationMinutes));
+    bookingIvsByIso.set(iso, list);
+  }
+  const collisionDays = new Set<string>();
+  for (const [iso, ivs] of Array.from(bookingIvsByIso.entries())) {
+    const blockIvs = blocks
+      .map((blk) => {
+        const s = isoOfDate(blk.startDate);
+        const e = isoOfDate(blk.endDate);
+        if (iso < s || iso > e) return null;
+        if (!blk.allDay && s === iso && blk.startTime && blk.endTime) {
+          return {
+            startMin: minutesOfTime(blk.startTime),
+            endMin: minutesOfTime(blk.endTime),
+          };
+        }
+        return { startMin: 0, endMin: 24 * 60 };
+      })
+      .filter((x): x is { startMin: number; endMin: number } => x !== null);
+    let hit = false;
+    for (let i = 0; i < ivs.length && !hit; i++) {
+      for (let j = i + 1; j < ivs.length; j++) {
+        if (rangesOverlap(ivs[i], ivs[j])) {
+          hit = true;
+          break;
+        }
+      }
+      if (!hit) {
+        for (const bv of blockIvs) {
+          if (rangesOverlap(ivs[i], bv)) {
+            hit = true;
+            break;
+          }
+        }
+      }
+    }
+    if (hit) collisionDays.add(iso);
+  }
 
   const prev = addMonth(ym, -1);
   const next = addMonth(ym, 1);
@@ -165,6 +218,11 @@ export default async function BookingsCalendarPage({
                     title={cellBlocks.map((b) => b.title).join(", ")}
                   />
                 )}
+                {collisionDays.has(cell.iso) && (
+                  <span className="text-xs text-amber-600" title="Has an overlap">
+                    ⚠
+                  </span>
+                )}
               </span>
             </Link>
           );
@@ -175,7 +233,8 @@ export default async function BookingsCalendarPage({
         <span className="rounded bg-blue-100 px-1 font-medium text-blue-700">n</span>{" "}
         bookings ·{" "}
         <span className="inline-block h-2 w-2 rounded-full bg-purple-500 align-middle" />{" "}
-        calendar block · shaded = closed day. Tap a day to see it by the hour.
+        calendar block · <span className="text-amber-600">⚠</span> overlap ·
+        shaded = closed day. Tap a day to see it by the hour.
       </p>
     </main>
   );
