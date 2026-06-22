@@ -94,7 +94,46 @@ export function ClientDirectory({ rows }: { rows: ClientRow[] }) {
         })}
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+      {/* Mobile: stacked cards (below sm). Desktop keeps the table below. */}
+      <div className="mt-4 space-y-5 sm:hidden">
+        {groups.map((g) => (
+          <section key={g.key}>
+            <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              {g.key}
+            </h2>
+            <div className="mt-2 space-y-2">
+              {g.items.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/admin/clients/${c.id}`}
+                  className="block rounded-lg border border-neutral-200 bg-white p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-medium">{c.name}</span>
+                    <span className="shrink-0 text-xs text-neutral-400">View ›</span>
+                  </div>
+                  <p className="text-sm">{c.whatsapp}</p>
+                  {c.email && (
+                    <p className="text-sm text-neutral-600">{c.email}</p>
+                  )}
+                  <p className="text-xs text-neutral-500">
+                    {c.packagesCount} package{c.packagesCount === 1 ? "" : "s"} ·{" "}
+                    {c.unused} unused
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ))}
+        {filtered.length === 0 && (
+          <p className="rounded-lg border border-neutral-200 bg-white px-4 py-6 text-center text-neutral-500">
+            {rows.length === 0 ? "No clients yet." : "No matching clients."}
+          </p>
+        )}
+      </div>
+
+      {/* Desktop: table (sm and up) */}
+      <div className="mt-4 hidden overflow-x-auto rounded-lg border border-neutral-200 bg-white sm:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
