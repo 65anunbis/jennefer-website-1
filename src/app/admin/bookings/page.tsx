@@ -107,7 +107,68 @@ export default async function BookingsPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+      {/* Mobile: stacked cards (below sm). Desktop keeps the table below. */}
+      <div className="mt-8 space-y-6 sm:hidden">
+        {groups.map((g) => (
+          <section key={g.date.getTime()}>
+            <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              {formatDateSGT(g.date)}
+            </h2>
+            <div className="mt-2 space-y-2">
+              {g.items.map((b) => (
+                <div
+                  key={b.id}
+                  className={`rounded-lg border border-neutral-200 p-3 ${ROW_CLASS[b.status] ?? "bg-white"}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-medium">{b.client.name}</span>
+                    <Link
+                      href={`/admin/bookings/${b.id}`}
+                      className="shrink-0 text-sm underline underline-offset-2"
+                    >
+                      Edit
+                    </Link>
+                  </div>
+                  <p className="mt-1 text-sm">
+                    {formatTimeSGT(b.scheduledTime)}
+                    {overlapIds.has(b.id) && (
+                      <span
+                        className="ml-1 text-amber-600"
+                        title="Overlaps another booking or a calendar block"
+                      >
+                        ⚠
+                      </span>
+                    )}
+                    {" · "}
+                    {STATUS_LABELS[b.status] ?? b.status}
+                  </p>
+                  <p className="text-sm">
+                    {b.deliveryType === "zoom"
+                      ? "Zoom"
+                      : `In person${b.venue ? ` · ${b.venue.name}` : ""}`}
+                  </p>
+                  <p className="text-sm">
+                    {b.clientPackage
+                      ? `${b.clientPackage.package.service.name} — ${b.clientPackage.package.name}`
+                      : "Ad-hoc"}
+                  </p>
+                  <p className="text-xs opacity-80">
+                    {formatWhatsappDisplay(b.client.whatsappNumber)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+        {bookings.length === 0 && (
+          <p className="rounded-lg border border-neutral-200 bg-white px-4 py-6 text-center text-neutral-500">
+            No bookings yet.
+          </p>
+        )}
+      </div>
+
+      {/* Desktop: table (sm and up) */}
+      <div className="mt-8 hidden overflow-x-auto rounded-lg border border-neutral-200 bg-white sm:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
