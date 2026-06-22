@@ -15,13 +15,23 @@ const STATUS_LABELS: Record<string, string> = {
   no_show: "No-show",
 };
 
-// Same status shading convention as the client booking-history table.
-const ROW_CLASS: Record<string, string> = {
-  cancelled: "bg-neutral-200 text-black",
-  completed: "bg-green-100 text-black",
-  confirmed: "bg-green-100 font-bold text-blue-700",
-  no_show: "bg-green-100 text-red-700",
+// Modern status pills (replaces the old full-row background shading).
+const STATUS_BADGE: Record<string, string> = {
+  confirmed: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  completed: "bg-green-50 text-green-700 ring-1 ring-green-200",
+  cancelled: "bg-neutral-100 text-neutral-500 ring-1 ring-neutral-200",
+  no_show: "bg-red-50 text-red-700 ring-1 ring-red-200",
 };
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[status] ?? "bg-neutral-100 text-neutral-600"}`}
+    >
+      {STATUS_LABELS[status] ?? status}
+    </span>
+  );
+}
 
 const COLSPAN = 7;
 
@@ -121,39 +131,42 @@ export default async function BookingsListPage() {
               {g.items.map((b) => (
                 <div
                   key={b.id}
-                  className={`rounded-lg border border-neutral-200 p-3 ${ROW_CLASS[b.status] ?? "bg-white"}`}
+                  className={`rounded-xl border border-neutral-200 bg-white p-3 shadow-sm ${b.status === "cancelled" ? "opacity-70" : ""}`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-medium">{b.client.name}</span>
-                    <Link
-                      href={`/admin/bookings/${b.id}`}
-                      className="shrink-0 text-sm underline underline-offset-2"
-                    >
-                      Edit
-                    </Link>
+                    <div>
+                      <p className="font-medium">{b.client.name}</p>
+                      <p className="text-sm text-neutral-500">
+                        {formatTimeSGT(b.scheduledTime)} SGT
+                      </p>
+                    </div>
+                    <StatusBadge status={b.status} />
                   </div>
-                  <p className="mt-1 text-sm">
-                    {formatTimeSGT(b.scheduledTime)} ·{" "}
-                    {STATUS_LABELS[b.status] ?? b.status}
-                  </p>
                   {conflicts.has(b.id) && (
-                    <p className="mt-0.5 text-xs font-medium text-amber-700">
+                    <p className="mt-1 text-xs font-medium text-amber-700">
                       ⚠ Overlaps {conflicts.get(b.id)!.join(", ")}
                     </p>
                   )}
-                  <p className="text-sm">
+                  <p className="mt-1 text-sm text-neutral-600">
                     {b.deliveryType === "zoom"
                       ? "Zoom"
                       : `In person${b.venue ? ` · ${b.venue.name}` : ""}`}
-                  </p>
-                  <p className="text-sm">
+                    {" · "}
                     {b.clientPackage
                       ? `${b.clientPackage.package.service.name} — ${b.clientPackage.package.name}`
                       : "Ad-hoc"}
                   </p>
-                  <p className="text-xs opacity-80">
-                    {formatWhatsappDisplay(b.client.whatsappNumber)}
-                  </p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-xs text-neutral-400">
+                      {formatWhatsappDisplay(b.client.whatsappNumber)}
+                    </span>
+                    <Link
+                      href={`/admin/bookings/${b.id}`}
+                      className="text-sm font-medium text-neutral-900 underline underline-offset-2"
+                    >
+                      Edit
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
@@ -191,7 +204,10 @@ export default async function BookingsListPage() {
                 </td>
               </tr>
               {g.items.map((b) => (
-                <tr key={b.id} className={ROW_CLASS[b.status] ?? ""}>
+                <tr
+                  key={b.id}
+                  className={`hover:bg-neutral-50 ${b.status === "cancelled" ? "text-neutral-400" : ""}`}
+                >
                   <td className="px-4 py-3">{formatTimeSGT(b.scheduledTime)}</td>
                   <td className="px-4 py-3 font-medium">
                     {b.client.name}
@@ -205,7 +221,7 @@ export default async function BookingsListPage() {
                     {formatWhatsappDisplay(b.client.whatsappNumber)}
                   </td>
                   <td className="px-4 py-3">
-                    {STATUS_LABELS[b.status] ?? b.status}
+                    <StatusBadge status={b.status} />
                   </td>
                   <td className="hidden px-4 py-3 sm:table-cell">
                     {b.deliveryType === "zoom"
