@@ -40,38 +40,41 @@ export default async function BookingsListPage() {
 
   const blocks = await prisma.calendarBlock.findMany();
 
-  // Flag bookings that overlap another non-cancelled booking OR a calendar
-  // block on the same date (mirrors the booking form's soft overlap warning).
+  // For each non-cancelled booking, collect WHAT it overlaps (other bookings /
+  // blocks on the same date) so the warning names the culprits at a glance.
   // Cancelled bookings don't occupy time, so they neither flag nor count.
   const active = bookings.filter((b) => b.status !== "cancelled");
-  const overlapIds = new Set<number>();
+  const conflicts = new Map<number, string[]>();
   for (const b of active) {
     const bi = bookingInterval(minutesOfTime(b.scheduledTime), b.durationMinutes);
     const dateMs = b.scheduledDate.getTime();
-    const hit =
-      active.some(
-        (o) =>
-          o.id !== b.id &&
-          o.scheduledDate.getTime() === dateMs &&
-          rangesOverlap(
-            bi,
-            bookingInterval(minutesOfTime(o.scheduledTime), o.durationMinutes),
-          ),
-      ) ||
-      blocks.some((blk) => {
-        if (blk.startDate.getTime() > dateMs || blk.endDate.getTime() < dateMs)
-          return false;
-        const sameStart = blk.startDate.getTime() === dateMs;
-        const timed = !blk.allDay && blk.startTime && blk.endTime && sameStart;
-        const interval = timed
-          ? {
-              startMin: minutesOfTime(blk.startTime!),
-              endMin: minutesOfTime(blk.endTime!),
-            }
-          : { startMin: 0, endMin: 24 * 60 };
-        return rangesOverlap(bi, interval);
-      });
-    if (hit) overlapIds.add(b.id);
+    const labels: string[] = [];
+    for (const o of active) {
+      if (
+        o.id !== b.id &&
+        o.scheduledDate.getTime() === dateMs &&
+        rangesOverlap(
+          bi,
+          bookingInterval(minutesOfTime(o.scheduledTime), o.durationMinutes),
+        )
+      ) {
+        labels.push(`${formatTimeSGT(o.scheduledTime)} ${o.client.name}`);
+      }
+    }
+    for (const blk of blocks) {
+      if (blk.startDate.getTime() > dateMs || blk.endDate.getTime() < dateMs)
+        continue;
+      const sameStart = blk.startDate.getTime() === dateMs;
+      const timed = !blk.allDay && blk.startTime && blk.endTime && sameStart;
+      const interval = timed
+        ? {
+            startMin: minutesOfTime(blk.startTime!),
+            endMin: minutesOfTime(blk.endTime!),
+          }
+        : { startMin: 0, endMin: 24 * 60 };
+      if (rangesOverlap(bi, interval)) labels.push(`block “${blk.title}”`);
+    }
+    if (labels.length) conflicts.set(b.id, labels);
   }
 
   // Group consecutive rows (already date-sorted) by their scheduled date.
@@ -130,18 +133,14 @@ export default async function BookingsListPage() {
                     </Link>
                   </div>
                   <p className="mt-1 text-sm">
-                    {formatTimeSGT(b.scheduledTime)}
-                    {overlapIds.has(b.id) && (
-                      <span
-                        className="ml-1 text-amber-600"
-                        title="Overlaps another booking or a calendar block"
-                      >
-                        ⚠
-                      </span>
-                    )}
-                    {" · "}
+                    {formatTimeSGT(b.scheduledTime)} ·{" "}
                     {STATUS_LABELS[b.status] ?? b.status}
                   </p>
+                  {conflicts.has(b.id) && (
+                    <p className="mt-0.5 text-xs font-medium text-amber-700">
+                      ⚠ Overlaps {conflicts.get(b.id)!.join(", ")}
+                    </p>
+                  )}
                   <p className="text-sm">
                     {b.deliveryType === "zoom"
                       ? "Zoom"
@@ -193,18 +192,15 @@ export default async function BookingsListPage() {
               </tr>
               {g.items.map((b) => (
                 <tr key={b.id} className={ROW_CLASS[b.status] ?? ""}>
-                  <td className="px-4 py-3">
-                    {formatTimeSGT(b.scheduledTime)}
-                    {overlapIds.has(b.id) && (
-                      <span
-                        className="ml-1 text-amber-600"
-                        title="Overlaps another booking or a calendar block"
-                      >
-                        ⚠
+                  <td className="px-4 py-3">{formatTimeSGT(b.scheduledTime)}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {b.client.name}
+                    {conflicts.has(b.id) && (
+                      <span className="block text-xs font-normal text-amber-700">
+                        ⚠ Overlaps {conflicts.get(b.id)!.join(", ")}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 font-medium">{b.client.name}</td>
                   <td className="hidden px-4 py-3 sm:table-cell">
                     {formatWhatsappDisplay(b.client.whatsappNumber)}
                   </td>
