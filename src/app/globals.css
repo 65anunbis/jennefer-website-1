@@ -25,3 +25,15 @@ body {
     text-wrap: balance;
   }
 }
+
+/* iOS Safari auto-zooms in when a form field smaller than 16px gains focus and
+   never zooms back out — which then makes other pages look zoomed/overflowed
+   until you pinch. Force form controls to 16px on small screens to prevent it;
+   desktop keeps the compact text-sm sizing. */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
