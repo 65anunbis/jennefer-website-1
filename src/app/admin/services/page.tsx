@@ -48,7 +48,7 @@ export default async function ServicesPage() {
             key={service.id}
             className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
           >
-            <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
+            <div className="flex flex-col gap-2 border-b border-neutral-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="font-semibold">
                   {service.name}
@@ -81,7 +81,33 @@ export default async function ServicesPage() {
                 No packages yet.
               </p>
             ) : (
-              <table className="w-full text-left text-sm">
+              <>
+              {/* Mobile: stacked package cards (below sm). */}
+              <div className="divide-y divide-neutral-100 sm:hidden">
+                {service.packages.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/admin/services/${service.id}/packages/${p.id}`}
+                    className={`block px-4 py-3 ${p.active ? "" : "text-neutral-400"}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-medium">
+                        {p.name}
+                        {!p.active && <span className="ml-2 text-xs">(inactive)</span>}
+                      </span>
+                      <span className="shrink-0 text-xs text-neutral-400">Edit ›</span>
+                    </div>
+                    <p className="text-xs text-neutral-600">
+                      {formatPrice(p.priceSgd)} · {p.durationMinutes} min ·{" "}
+                      {p.sessionsCount} session{p.sessionsCount === 1 ? "" : "s"} ·{" "}
+                      {deliveryLabel[p.deliveryType] ?? p.deliveryType}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Desktop: table (sm and up). */}
+              <table className="hidden w-full text-left text-sm sm:table">
                 <thead className="border-b border-neutral-100 text-neutral-500">
                   <tr>
                     <th className="px-4 py-2 font-medium">Package</th>
@@ -119,6 +145,7 @@ export default async function ServicesPage() {
                   ))}
                 </tbody>
               </table>
+              </>
             )}
           </section>
         ))}

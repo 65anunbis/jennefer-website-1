@@ -14,19 +14,22 @@ const BLOCK_TYPE_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-function whenLabel(b: {
+const COLSPAN = 4;
+
+/** Concise time/span for a block, WITHOUT the start date (that's the group header). */
+function spanLabel(b: {
   startDate: Date;
   endDate: Date;
   allDay: boolean;
   startTime: Date | null;
   endTime: Date | null;
 }): string {
-  const sameDay = b.startDate.getTime() === b.endDate.getTime();
-  const dateRange = sameDay
-    ? formatDateSGT(b.startDate)
-    : `${formatDateSGT(b.startDate)} – ${formatDateSGT(b.endDate)}`;
-  if (b.allDay || !b.startTime || !b.endTime) return `${dateRange} (all day)`;
-  return `${dateRange}, ${formatTimeSGT(b.startTime)}–${formatTimeSGT(b.endTime)} SGT`;
+  const multiDay = b.startDate.getTime() !== b.endDate.getTime();
+  const timePart =
+    b.allDay || !b.startTime || !b.endTime
+      ? "All day"
+      : `${formatTimeSGT(b.startTime)}–${formatTimeSGT(b.endTime)} SGT`;
+  return multiDay ? `${timePart} · until ${formatDateSGT(b.endDate)}` : timePart;
 }
 
 export default async function BlocksPage() {
@@ -35,6 +38,17 @@ export default async function BlocksPage() {
     orderBy: [{ startDate: "desc" }, { id: "desc" }],
     include: { venue: { select: { name: true } } },
   });
+
+  // Group consecutive rows (already start-date-sorted) by their start date.
+  const groups: { date: Date; items: typeof blocks }[] = [];
+  for (const b of blocks) {
+    const last = groups[groups.length - 1];
+    if (last && last.date.getTime() === b.startDate.getTime()) {
+      last.items.push(b);
+    } else {
+      groups.push({ date: b.startDate, items: [b] });
+    }
+  }
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -59,44 +73,95 @@ export default async function BlocksPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+      {/* Mobile: stacked cards (below sm). Desktop keeps the table below. */}
+      <div className="mt-8 space-y-6 sm:hidden">
+        {groups.map((g) => (
+          <section key={g.date.getTime()}>
+            <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              {formatDateSGT(g.date)}
+            </h2>
+            <div className="mt-2 space-y-2">
+              {g.items.map((b) => (
+                <Link
+                  key={b.id}
+                  href={`/admin/blocks/${b.id}`}
+                  className="block rounded-lg border border-neutral-200 bg-white p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-medium">{b.title}</span>
+                    <span className="shrink-0 text-xs text-neutral-400">Edit ›</span>
+                  </div>
+                  <p className="text-sm">{spanLabel(b)}</p>
+                  <p className="text-xs text-neutral-500">
+                    {BLOCK_TYPE_LABELS[b.blockType] ?? b.blockType}
+                    {b.venue ? ` · ${b.venue.name}` : ""}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ))}
+        {blocks.length === 0 && (
+          <p className="rounded-lg border border-neutral-200 bg-white px-4 py-6 text-center text-neutral-500">
+            No calendar blocks yet.
+          </p>
+        )}
+      </div>
+
+      {/* Desktop: table (sm and up) */}
+      <div className="mt-8 hidden overflow-x-auto rounded-lg border border-neutral-200 bg-white sm:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
               <th className="px-4 py-3 font-medium">When (SGT)</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Type</th>
               <th className="px-4 py-3 font-medium">Title</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Venue</th>
+              <th className="px-4 py-3 font-medium">Type</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
-            {blocks.map((b) => (
-              <tr key={b.id}>
-                <td className="px-4 py-3">{whenLabel(b)}</td>
-                <td className="hidden px-4 py-3 sm:table-cell">
-                  {BLOCK_TYPE_LABELS[b.blockType] ?? b.blockType}
-                </td>
-                <td className="px-4 py-3 font-medium">{b.title}</td>
-                <td className="hidden px-4 py-3 sm:table-cell">{b.venue?.name ?? "—"}</td>
-                <td className="px-4 py-3 text-right">
-                  <Link
-                    href={`/admin/blocks/${b.id}`}
-                    className="underline underline-offset-2"
-                  >
-                    Edit
-                  </Link>
+          {groups.map((g) => (
+            <tbody key={g.date.getTime()} className="divide-y divide-neutral-100">
+              <tr className="bg-neutral-50">
+                <td
+                  colSpan={COLSPAN}
+                  className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500"
+                >
+                  {formatDateSGT(g.date)}
                 </td>
               </tr>
-            ))}
-            {blocks.length === 0 && (
+              {g.items.map((b) => (
+                <tr key={b.id}>
+                  <td className="px-4 py-3">{spanLabel(b)}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {b.title}
+                    {b.venue && (
+                      <span className="text-neutral-400"> · {b.venue.name}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {BLOCK_TYPE_LABELS[b.blockType] ?? b.blockType}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      href={`/admin/blocks/${b.id}`}
+                      className="underline underline-offset-2"
+                    >
+                      Edit
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          ))}
+          {blocks.length === 0 && (
+            <tbody>
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-neutral-500">
+                <td colSpan={COLSPAN} className="px-4 py-6 text-center text-neutral-500">
                   No calendar blocks yet.
                 </td>
               </tr>
-            )}
-          </tbody>
+            </tbody>
+          )}
         </table>
       </div>
     </main>

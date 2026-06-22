@@ -30,7 +30,38 @@ export default async function VenuesPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+      {/* Mobile: stacked cards (below sm). Desktop keeps the table below. */}
+      <div className="mt-8 space-y-2 sm:hidden">
+        {venues.map((v) => (
+          <Link
+            key={v.id}
+            href={`/admin/venues/${v.id}`}
+            className={`block rounded-lg border border-neutral-200 bg-white p-3 ${v.active ? "" : "text-neutral-400"}`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="font-medium">{v.name}</span>
+              <span className="shrink-0 text-xs text-neutral-400">Edit ›</span>
+            </div>
+            {v.address && <p className="text-sm">{v.address}</p>}
+            <p className="text-xs">
+              {v.isDefault && <span className="text-green-700">Default · </span>}
+              {v.active ? (
+                <span className="text-green-700">Active</span>
+              ) : (
+                <span>Inactive</span>
+              )}
+            </p>
+          </Link>
+        ))}
+        {venues.length === 0 && (
+          <p className="rounded-lg border border-neutral-200 bg-white px-4 py-6 text-center text-neutral-500">
+            No venues yet.
+          </p>
+        )}
+      </div>
+
+      {/* Desktop: table (sm and up) */}
+      <div className="mt-8 hidden overflow-x-auto rounded-lg border border-neutral-200 bg-white sm:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>

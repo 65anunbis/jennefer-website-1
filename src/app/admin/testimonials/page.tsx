@@ -31,7 +31,39 @@ export default async function TestimonialsPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+      {/* Mobile: stacked cards (below sm). Desktop keeps the table below. */}
+      <div className="mt-8 space-y-2 sm:hidden">
+        {testimonials.map((t) => (
+          <Link
+            key={t.id}
+            href={`/admin/testimonials/${t.id}`}
+            className={`block rounded-lg border border-neutral-200 bg-white p-3 ${t.visible ? "" : "text-neutral-400"}`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="font-medium">{t.clientName}</span>
+              <span className="shrink-0 text-xs text-neutral-400">Edit ›</span>
+            </div>
+            <p className="line-clamp-2 text-sm">“{t.quote}”</p>
+            <p className="text-xs">
+              {t.service?.name ?? "—"} ·{" "}
+              {t.visible ? (
+                <span className="text-green-700">Visible</span>
+              ) : (
+                <span>Hidden</span>
+              )}{" "}
+              · order {t.sortOrder}
+            </p>
+          </Link>
+        ))}
+        {testimonials.length === 0 && (
+          <p className="rounded-lg border border-neutral-200 bg-white px-4 py-6 text-center text-neutral-500">
+            No testimonials yet.
+          </p>
+        )}
+      </div>
+
+      {/* Desktop: table (sm and up) */}
+      <div className="mt-8 hidden overflow-x-auto rounded-lg border border-neutral-200 bg-white sm:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>

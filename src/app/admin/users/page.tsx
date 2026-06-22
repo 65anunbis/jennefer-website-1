@@ -39,7 +39,49 @@ export default async function UsersPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+      {/* Mobile: stacked cards (below sm). Desktop keeps the table below. */}
+      <div className="mt-8 space-y-2 sm:hidden">
+        {users.map((u) => (
+          <Link
+            key={u.id}
+            href={`/admin/users/${u.id}`}
+            className={`block rounded-lg border border-neutral-200 bg-white p-3 ${u.isActive ? "" : "text-neutral-400"}`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="font-medium">
+                {u.name}
+                {u.id === Number(actor.id) && (
+                  <span className="ml-2 text-xs text-neutral-400">(you)</span>
+                )}
+              </span>
+              <span className="shrink-0 text-xs text-neutral-400">Edit ›</span>
+            </div>
+            <p className="text-sm">
+              @{u.username}
+              {u.email ? ` · ${u.email}` : ""}
+            </p>
+            <p className="text-xs">
+              <span className="capitalize">{u.role}</span> ·{" "}
+              {u.isActive ? (
+                <span className="text-green-700">Active</span>
+              ) : (
+                <span>Inactive</span>
+              )}{" "}
+              · last login {formatDate(u.lastLoginAt)}
+            </p>
+            {u.mustChangePassword && (
+              <p className="mt-1">
+                <span className="rounded bg-amber-50 px-1.5 py-0.5 text-xs text-amber-700">
+                  must change password
+                </span>
+              </p>
+            )}
+          </Link>
+        ))}
+      </div>
+
+      {/* Desktop: table (sm and up) */}
+      <div className="mt-8 hidden overflow-x-auto rounded-lg border border-neutral-200 bg-white sm:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
