@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
 import { formatWhatsappDisplay } from "@/lib/phone";
 import { sessionsRemaining } from "@/lib/sessions";
+import { ClientDirectory, type ClientRow } from "./ClientDirectory";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,23 @@ export default async function ClientsPage() {
       },
     },
   });
+
+  const rows: ClientRow[] = clients.map((c) => ({
+    id: c.id,
+    name: c.name,
+    whatsapp: formatWhatsappDisplay(c.whatsappNumber),
+    email: c.email,
+    packagesCount: c._count.clientPackages,
+    // Unused = sessions still available to book: summed remaining across
+    // non-cancelled packages (cancelled bookings free a session).
+    unused: c.clientPackages
+      .filter((p) => p.status !== "cancelled")
+      .reduce(
+        (sum, p) =>
+          sum + sessionsRemaining(p.sessionsTotal, p.bookings.map((b) => b.status)),
+        0,
+      ),
+  }));
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -42,61 +60,7 @@ export default async function ClientsPage() {
         </Link>
       </header>
 
-      <div className="mt-8 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
-            <tr>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">WhatsApp</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Email</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Packages</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Bookings unused</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-100">
-            {clients.map((c) => {
-              // Unused = sessions still available to book: summed remaining
-              // across non-cancelled packages (cancelled bookings free a session).
-              const unused = c.clientPackages
-                .filter((p) => p.status !== "cancelled")
-                .reduce(
-                  (sum, p) =>
-                    sum +
-                    sessionsRemaining(
-                      p.sessionsTotal,
-                      p.bookings.map((b) => b.status),
-                    ),
-                  0,
-                );
-              return (
-                <tr key={c.id}>
-                  <td className="px-4 py-3 font-medium">{c.name}</td>
-                  <td className="px-4 py-3">{formatWhatsappDisplay(c.whatsappNumber)}</td>
-                  <td className="hidden px-4 py-3 sm:table-cell">{c.email ?? "—"}</td>
-                  <td className="hidden px-4 py-3 sm:table-cell">{c._count.clientPackages}</td>
-                  <td className="hidden px-4 py-3 sm:table-cell">{unused}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/clients/${c.id}`}
-                      className="underline underline-offset-2"
-                    >
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-            {clients.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-neutral-500">
-                  No clients yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ClientDirectory rows={rows} />
     </main>
   );
 }
