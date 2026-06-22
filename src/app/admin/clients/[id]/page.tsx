@@ -179,9 +179,17 @@ export default async function ClientDetailPage({
         </div>
       </section>
 
-      {/* Booking history (read-only; managed from the Bookings module) ------ */}
+      {/* Booking history (managed from the Bookings module) ---------------- */}
       <section className="mt-8">
-        <h2 className="text-lg font-semibold">Booking history</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Booking history</h2>
+          <Link
+            href={`/admin/bookings/new?clientId=${client.id}`}
+            className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800"
+          >
+            Add booking
+          </Link>
+        </div>
         <div className="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">

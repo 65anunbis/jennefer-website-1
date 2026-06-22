@@ -10,10 +10,15 @@ export const dynamic = "force-dynamic";
 export default async function NewBookingPage({
   searchParams,
 }: {
-  searchParams: { date?: string; time?: string };
+  searchParams: { date?: string; time?: string; clientId?: string };
 }) {
   await requireUser();
   const { clients, packages, venues } = await loadBookingFormOptions();
+
+  const clientIdNum = Number(searchParams.clientId);
+  const defaultClientId = Number.isInteger(clientIdNum) && clientIdNum > 0
+    ? clientIdNum
+    : undefined;
 
   return (
     <main className="mx-auto max-w-lg px-6 py-10">
@@ -30,6 +35,7 @@ export default async function NewBookingPage({
         clients={clients}
         packages={packages}
         venues={venues}
+        defaultClientId={defaultClientId}
         defaultDate={searchParams.date ?? todaySGT()}
         defaultTime={searchParams.time}
       />

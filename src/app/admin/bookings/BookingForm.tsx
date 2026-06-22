@@ -36,6 +36,7 @@ type Props = {
   packages: PackageOption[];
   venues: VenueOption[];
   booking?: BookingValues;
+  defaultClientId?: number;
   defaultDate?: string;
   defaultTime?: string;
 };
@@ -70,13 +71,18 @@ export function BookingForm({
   packages,
   venues,
   booking,
+  defaultClientId,
   defaultDate,
   defaultTime,
 }: Props) {
   const [state, formAction] = useFormState(action, {} as FormState);
 
   const [clientId, setClientId] = useState<string>(
-    booking ? String(booking.clientId) : "",
+    booking
+      ? String(booking.clientId)
+      : defaultClientId
+        ? String(defaultClientId)
+        : "",
   );
   const [clientPackageId, setClientPackageId] = useState<string>(
     booking?.clientPackageId ? String(booking.clientPackageId) : "",
