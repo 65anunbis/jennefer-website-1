@@ -28,7 +28,7 @@ const BOOKING_ROW_CLASS: Record<string, string> = {
   cancelled: "bg-neutral-200 text-black",
   completed: "bg-green-100 text-black",
   confirmed: "bg-green-100 font-bold text-blue-700",
-  no_show: "bg-green-100 font-bold text-red-700",
+  no_show: "bg-green-100 text-red-700",
 };
 
 export default async function ClientDetailPage({
