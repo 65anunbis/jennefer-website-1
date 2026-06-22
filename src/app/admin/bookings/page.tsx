@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
 import { formatDateSGT, formatTimeSGT } from "@/lib/datetime";
+import { bookingInterval, minutesOfTime, rangesOverlap } from "@/lib/overlap";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,42 @@ export default async function BookingsPage() {
       },
     },
   });
+
+  const blocks = await prisma.calendarBlock.findMany();
+
+  // Flag bookings that overlap another non-cancelled booking OR a calendar
+  // block on the same date (mirrors the booking form's soft overlap warning).
+  // Cancelled bookings don't occupy time, so they neither flag nor count.
+  const active = bookings.filter((b) => b.status !== "cancelled");
+  const overlapIds = new Set<number>();
+  for (const b of active) {
+    const bi = bookingInterval(minutesOfTime(b.scheduledTime), b.durationMinutes);
+    const dateMs = b.scheduledDate.getTime();
+    const hit =
+      active.some(
+        (o) =>
+          o.id !== b.id &&
+          o.scheduledDate.getTime() === dateMs &&
+          rangesOverlap(
+            bi,
+            bookingInterval(minutesOfTime(o.scheduledTime), o.durationMinutes),
+          ),
+      ) ||
+      blocks.some((blk) => {
+        if (blk.startDate.getTime() > dateMs || blk.endDate.getTime() < dateMs)
+          return false;
+        const sameStart = blk.startDate.getTime() === dateMs;
+        const timed = !blk.allDay && blk.startTime && blk.endTime && sameStart;
+        const interval = timed
+          ? {
+              startMin: minutesOfTime(blk.startTime!),
+              endMin: minutesOfTime(blk.endTime!),
+            }
+          : { startMin: 0, endMin: 24 * 60 };
+        return rangesOverlap(bi, interval);
+      });
+    if (hit) overlapIds.add(b.id);
+  }
 
   // Group consecutive rows (already date-sorted) by their scheduled date.
   const groups: { date: Date; items: typeof bookings }[] = [];
@@ -93,7 +130,17 @@ export default async function BookingsPage() {
               </tr>
               {g.items.map((b) => (
                 <tr key={b.id} className={ROW_CLASS[b.status] ?? ""}>
-                  <td className="px-4 py-3">{formatTimeSGT(b.scheduledTime)}</td>
+                  <td className="px-4 py-3">
+                    {formatTimeSGT(b.scheduledTime)}
+                    {overlapIds.has(b.id) && (
+                      <span
+                        className="ml-1 text-amber-600"
+                        title="Overlaps another booking or a calendar block"
+                      >
+                        ⚠
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 font-medium">{b.client.name}</td>
                   <td className="px-4 py-3">
                     {STATUS_LABELS[b.status] ?? b.status}
