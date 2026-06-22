@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
-import { formatDateTimeSGT } from "@/lib/datetime";
+import { formatDateSGT, formatTimeSGT } from "@/lib/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +20,8 @@ const ROW_CLASS: Record<string, string> = {
   no_show: "bg-green-100 text-red-700",
 };
 
+const COLSPAN = 6;
+
 export default async function BookingsPage() {
   await requireUser();
   const bookings = await prisma.booking.findMany({
@@ -32,6 +34,17 @@ export default async function BookingsPage() {
       },
     },
   });
+
+  // Group consecutive rows (already date-sorted) by their scheduled date.
+  const groups: { date: Date; items: typeof bookings }[] = [];
+  for (const b of bookings) {
+    const last = groups[groups.length - 1];
+    if (last && last.date.getTime() === b.scheduledDate.getTime()) {
+      last.items.push(b);
+    } else {
+      groups.push({ date: b.scheduledDate, items: [b] });
+    }
+  }
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -60,7 +73,7 @@ export default async function BookingsPage() {
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
             <tr>
-              <th className="px-4 py-3 font-medium">When (SGT)</th>
+              <th className="px-4 py-3 font-medium">Time (SGT)</th>
               <th className="px-4 py-3 font-medium">Client</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Delivery</th>
@@ -68,44 +81,54 @@ export default async function BookingsPage() {
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
-            {bookings.map((b) => (
-              <tr key={b.id} className={ROW_CLASS[b.status] ?? ""}>
-                <td className="px-4 py-3">
-                  {formatDateTimeSGT(b.scheduledDate, b.scheduledTime)}
-                </td>
-                <td className="px-4 py-3 font-medium">{b.client.name}</td>
-                <td className="px-4 py-3">
-                  {STATUS_LABELS[b.status] ?? b.status}
-                </td>
-                <td className="hidden px-4 py-3 sm:table-cell">
-                  {b.deliveryType === "zoom"
-                    ? "Zoom"
-                    : `In person${b.venue ? ` · ${b.venue.name}` : ""}`}
-                </td>
-                <td className="hidden px-4 py-3 sm:table-cell">
-                  {b.clientPackage
-                    ? `${b.clientPackage.package.service.name} — ${b.clientPackage.package.name}`
-                    : "Ad-hoc"}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link
-                    href={`/admin/bookings/${b.id}`}
-                    className="underline underline-offset-2"
-                  >
-                    Edit
-                  </Link>
+          {groups.map((g) => (
+            <tbody key={g.date.getTime()} className="divide-y divide-neutral-100">
+              <tr className="bg-neutral-50">
+                <td
+                  colSpan={COLSPAN}
+                  className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500"
+                >
+                  {formatDateSGT(g.date)}
                 </td>
               </tr>
-            ))}
-            {bookings.length === 0 && (
+              {g.items.map((b) => (
+                <tr key={b.id} className={ROW_CLASS[b.status] ?? ""}>
+                  <td className="px-4 py-3">{formatTimeSGT(b.scheduledTime)}</td>
+                  <td className="px-4 py-3 font-medium">{b.client.name}</td>
+                  <td className="px-4 py-3">
+                    {STATUS_LABELS[b.status] ?? b.status}
+                  </td>
+                  <td className="hidden px-4 py-3 sm:table-cell">
+                    {b.deliveryType === "zoom"
+                      ? "Zoom"
+                      : `In person${b.venue ? ` · ${b.venue.name}` : ""}`}
+                  </td>
+                  <td className="hidden px-4 py-3 sm:table-cell">
+                    {b.clientPackage
+                      ? `${b.clientPackage.package.service.name} — ${b.clientPackage.package.name}`
+                      : "Ad-hoc"}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      href={`/admin/bookings/${b.id}`}
+                      className="underline underline-offset-2"
+                    >
+                      Edit
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          ))}
+          {bookings.length === 0 && (
+            <tbody>
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-neutral-500">
+                <td colSpan={COLSPAN} className="px-4 py-6 text-center text-neutral-500">
                   No bookings yet.
                 </td>
               </tr>
-            )}
-          </tbody>
+            </tbody>
+          )}
         </table>
       </div>
     </main>
