@@ -104,6 +104,7 @@ export default async function EditBookingPage({
           </p>
           <div className="mt-3">
             <NotifyClientPanel
+              key={booking.updatedAt.getTime()}
               whatsappNumber={booking.client.whatsappNumber}
               phoneDisplay={formatWhatsappDisplay(booking.client.whatsappNumber)}
               email={booking.client.email}

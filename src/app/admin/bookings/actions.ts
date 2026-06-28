@@ -15,7 +15,11 @@ import {
 import { formatTimeSGT } from "@/lib/datetime";
 import type { DeliveryType, BookingStatus } from "@/generated/prisma/enums";
 
-export type FormState = { error?: string; overlapWarning?: string };
+export type FormState = {
+  error?: string;
+  overlapWarning?: string;
+  success?: boolean;
+};
 
 const DELIVERY_TYPES: DeliveryType[] = ["in_person", "zoom"];
 const BOOKING_STATUSES: BookingStatus[] = [
@@ -351,10 +355,11 @@ export async function updateBooking(
   );
   revalidatePath("/admin/bookings");
   revalidatePath(`/admin/bookings/${id}`);
-  // Redirect to the list, NOT back to this same page — a server-action
-  // redirect to the route the form was submitted from triggers a client-side
-  // exception on the post-redirect refresh. The list is a safe destination.
-  redirect("/admin/bookings");
+  // Stay on this page. We deliberately do NOT redirect back to the same route
+  // (a server-action redirect to the route the form was submitted from throws a
+  // client-side exception on the post-redirect refresh). revalidatePath above
+  // refreshes the server data in place; the form shows a "Saved" confirmation.
+  return { success: true };
 }
 
 export async function deleteBooking(id: number): Promise<void> {

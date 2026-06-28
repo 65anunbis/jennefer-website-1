@@ -117,6 +117,11 @@ export function BookingForm({
 
   return (
     <form action={formAction} className="space-y-5">
+      {state.success && (
+        <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+          Saved ✓
+        </p>
+      )}
       {state.error && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.error}
