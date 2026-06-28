@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
-import { todaySGT } from "@/lib/datetime";
+import { formatDateSGT, formatTimeSGT, todaySGT } from "@/lib/datetime";
 import {
   WEEKDAY_LABELS,
   addMonth,
@@ -16,6 +16,32 @@ import { bookingInterval, minutesOfTime, rangesOverlap } from "@/lib/overlap";
 import { ViewToggle } from "./ViewToggle";
 
 export const dynamic = "force-dynamic";
+
+const BLOCK_TYPE_LABELS: Record<string, string> = {
+  vacation: "Vacation",
+  training: "Training",
+  team_event: "Team event",
+  personal: "Personal",
+  public_holiday: "Public holiday",
+  other: "Other",
+};
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+function blockSpanLabel(b: {
+  startDate: Date;
+  endDate: Date;
+  allDay: boolean;
+  startTime: Date | null;
+  endTime: Date | null;
+}): string {
+  const sameDay = isoOfDate(b.startDate) === isoOfDate(b.endDate);
+  const datePart = sameDay
+    ? formatDateSGT(b.startDate)
+    : `${formatDateSGT(b.startDate)} – ${formatDateSGT(b.endDate)}`;
+  if (b.allDay || !b.startTime || !b.endTime) return `${datePart} · all day`;
+  return `${datePart}, ${formatTimeSGT(b.startTime)}–${formatTimeSGT(b.endTime)} SGT`;
+}
 
 export default async function BookingsCalendarPage({
   searchParams,
@@ -47,9 +73,11 @@ export default async function BookingsCalendarPage({
     prisma.calendarBlock.findMany({
       where: { startDate: { lte: endDate }, endDate: { gte: startDate } },
       select: {
+        id: true,
         startDate: true,
         endDate: true,
         title: true,
+        blockType: true,
         allDay: true,
         startTime: true,
         endTime: true,
@@ -120,6 +148,21 @@ export default async function BookingsCalendarPage({
 
   const prev = addMonth(ym, -1);
   const next = addMonth(ym, 1);
+  const prevYear = addMonth(ym, -12);
+  const nextYear = addMonth(ym, 12);
+
+  // Blocks overlapping the displayed month (for the "Blocks this month" list).
+  const monthStartIso = `${ym.year}-${pad2(ym.month)}-01`;
+  const monthEndIso = `${ym.year}-${pad2(ym.month)}-${pad2(
+    new Date(Date.UTC(ym.year, ym.month, 0)).getUTCDate(),
+  )}`;
+  const monthBlocks = blocks
+    .filter(
+      (b) =>
+        isoOfDate(b.startDate) <= monthEndIso &&
+        isoOfDate(b.endDate) >= monthStartIso,
+    )
+    .sort((a, b) => isoOfDate(a.startDate).localeCompare(isoOfDate(b.startDate)));
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -145,13 +188,22 @@ export default async function BookingsCalendarPage({
 
       {/* Month navigation */}
       <div className="mt-4 flex items-center justify-between">
-        <Link
-          href={`/admin/bookings?month=${monthParam(prev)}`}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100"
-          aria-label="Previous month"
-        >
-          ‹
-        </Link>
+        <div className="flex gap-1">
+          <Link
+            href={`/admin/bookings?month=${monthParam(prevYear)}`}
+            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100"
+            aria-label="Previous year"
+          >
+            «
+          </Link>
+          <Link
+            href={`/admin/bookings?month=${monthParam(prev)}`}
+            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100"
+            aria-label="Previous month"
+          >
+            ‹
+          </Link>
+        </div>
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">{monthLabel(ym)}</h2>
           {!isCurrentMonth && (
@@ -163,13 +215,22 @@ export default async function BookingsCalendarPage({
             </Link>
           )}
         </div>
-        <Link
-          href={`/admin/bookings?month=${monthParam(next)}`}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100"
-          aria-label="Next month"
-        >
-          ›
-        </Link>
+        <div className="flex gap-1">
+          <Link
+            href={`/admin/bookings?month=${monthParam(next)}`}
+            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100"
+            aria-label="Next month"
+          >
+            ›
+          </Link>
+          <Link
+            href={`/admin/bookings?month=${monthParam(nextYear)}`}
+            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100"
+            aria-label="Next year"
+          >
+            »
+          </Link>
+        </div>
       </div>
 
       {/* Weekday header */}
@@ -236,6 +297,35 @@ export default async function BookingsCalendarPage({
         calendar block · <span className="text-amber-600">⚠</span> overlap ·
         shaded = closed day. Tap a day to see it by the hour.
       </p>
+
+      {monthBlocks.length > 0 && (
+        <section className="mt-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            Blocks this month
+          </h2>
+          <div className="mt-2 space-y-1">
+            {monthBlocks.map((b) => (
+              <Link
+                key={b.id}
+                href={`/admin/blocks/${b.id}`}
+                className="flex items-center justify-between gap-3 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm hover:bg-neutral-50"
+              >
+                <span>
+                  <span className="font-medium">{b.title}</span>
+                  <span className="text-neutral-400">
+                    {" "}
+                    · {BLOCK_TYPE_LABELS[b.blockType] ?? b.blockType}
+                  </span>
+                </span>
+                <span className="shrink-0 text-neutral-500">
+                  {blockSpanLabel(b)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="mt-10 flex flex-wrap gap-2 border-t border-neutral-200 pt-6">
         <Link
           href="/admin"
