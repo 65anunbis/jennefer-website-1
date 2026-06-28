@@ -33,4 +33,4 @@ This file is the quick reference; the `docs/` files hold the detail. Keep CLAUDE
 - `npm run dev` · `npm run build` · `npx prisma …` (CLI uses `DIRECT_URL`).
 
 ## Current state
-Step **4.5a** (booking CRUD) + **4.5b** (month→day calendar) DONE and pushed. **Next: 4.5c** (wa.me confirmations + copy buttons + day-before reminder), then **4.5d** (EOD/SOD — no GCal retry), then **4.6** (Vitest + auth-hardening bundle). Live detail in `docs/PROGRESS.md`.
+Step **4.5a** (booking CRUD), **4.5b** (month→day calendar) and **4.5c** (WhatsApp confirmation + copy-button panel) DONE and pushed — plus several UI-refinement rounds (mobile card layouts; uniform top+bottom back-nav; list date-period + client-search filters with calendar blocks merged in; calendar year-jump + blocks-this-month; modernized login/change-password with show-password; per-page tab titles `JW-…`; new bookings require a package; clients "Packages usable" column). **NEXT: 4.5d** (EOD/SOD — resolve today's outcomes + day-before reminders; **no GCal retry**), then **4.6** (Vitest + auth-hardening bundle). Live detail in `docs/PROGRESS.md`.

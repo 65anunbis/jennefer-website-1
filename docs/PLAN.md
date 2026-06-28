@@ -728,7 +728,7 @@ The goal is narrow: let Jennefer see her bookings on her **native iPhone calenda
 - [ ] Admin: Venues table (seed one default, admin-only) + Blocks (`calendar_blocks`: vacation/training/etc.; admin+staff; push to GCal) + Business hours (recurring weekly, admin-only, seed Mon–Fri 9–6 / Sat 9–1 / Sun off)
 - [ ] Admin: Client manager (directory, booking history, package purchases & session consumption, free-text notes, admin-only session notes) — **built before Bookings** (a booking selects an existing client + package)
 - [ ] Admin: Bookings manager (add/edit/delete; venue + delivery_type + duration_minutes; **hard-block on exhausted package**; ~~GCal mirror push + `gcal_sync_failures` retry~~ **GCal deferred — §12**), with a DB-sourced **month→day calendar view** (bookings ∪ blocks; working-hours shading white/pink; click-to-create pre-fills the form) + **inline soft overlap warning** + **EOD/SOD processing** (resolve outcomes, day-before reminders; **no GCal retry in current build**)
-  - 4.5a (CRUD + overlap/GCal-stub seam) **DONE**, 4.5b (month→day calendar) **DONE**; **NEXT: 4.5c** (wa.me confirmations + copy buttons + day-before reminder), **4.5d** (EOD/SOD, no GCal retry)
+  - 4.5a (CRUD + overlap/GCal-stub seam) **DONE**, 4.5b (month→day calendar) **DONE**, 4.5c (wa.me confirmation + copy-button panel) **DONE** + many UI-refinement rounds (see `docs/PROGRESS.md`); **NEXT: 4.5d** (EOD/SOD, no GCal retry), then 4.6 (Vitest + auth-hardening)
 - [ ] Admin: Blog editor (Tiptap, publish/unpublish)
 - [ ] Admin: Testimonials manager
 - [ ] Admin: Services/pricing editor
