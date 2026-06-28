@@ -37,3 +37,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# claude — personal/secret scratch (keep out of the shared repo)
+CLAUDE.local.md
+.claude/settings.local.json
