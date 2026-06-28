@@ -290,7 +290,8 @@ export async function createBooking(
 
   await recordAudit("create", "booking", created.id, "Created booking");
   revalidatePath("/admin/bookings");
-  redirect("/admin/bookings");
+  // Land on the booking page so the "Notify client" panel is right there.
+  redirect(`/admin/bookings/${created.id}`);
 }
 
 export async function updateBooking(
@@ -349,7 +350,7 @@ export async function updateBooking(
     changed.length ? `Updated: ${changed.join(", ")}` : "No changes",
   );
   revalidatePath("/admin/bookings");
-  redirect("/admin/bookings");
+  redirect(`/admin/bookings/${id}`);
 }
 
 export async function deleteBooking(id: number): Promise<void> {
