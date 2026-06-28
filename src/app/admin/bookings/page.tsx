@@ -236,6 +236,14 @@ export default async function BookingsCalendarPage({
         calendar block · <span className="text-amber-600">⚠</span> overlap ·
         shaded = closed day. Tap a day to see it by the hour.
       </p>
+      <div className="mt-10 flex flex-wrap gap-2 border-t border-neutral-200 pt-6">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← Dashboard
+        </Link>
+      </div>
     </main>
   );
 }
