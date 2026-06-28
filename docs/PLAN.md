@@ -621,26 +621,6 @@ The calendar *count* is independent of the OAuth *count*. We use **one** Google 
 
 ---
 
-## 12B. Phone calendar visibility — ICS subscription feed ("Pattern A")
-
-> **CHOSEN 2026-06-28 as the phone-visibility path (in place of the Google write-API, §12). Prototype AFTER Steps 4.5 + 4.6.**
-
-The goal is narrow: let Jennefer see her bookings on her **native iPhone calendar** (and ideally get a pre-session beep) without the heavy Google write-API. An **ICS subscription feed** delivers this cheaply.
-
-**How it works:**
-- One **tokenized, read-only** endpoint: `/api/calendar/feed/<secret-token>.ics`. It is **not a stored file** — it's a route that, on each request, queries the DB for all current bookings (+ calendar blocks) and renders **iCalendar** text live. Nothing is pre-generated; there is **no per-booking sync work** (booking create/edit/cancel are already DB writes; the feed just reflects current DB state on the next fetch).
-- The phone **pulls** the feed on its own schedule (iOS "Fetch New Data", ~15–60 min). We never push. So updates land on the phone on its next refresh — fine for glancing, not a live second-by-second mirror.
-- Each event carries a **stable `UID`** (`booking-<id>@jenneferwong.sg`, `block-<id>@…`) so edits **update in place** (no duplicates) and cancelled/deleted bookings simply **drop out** of the feed and disappear on next refresh. Cancelled bookings are **excluded** from the feed output.
-- **Alarms:** embed `VALARM`s (e.g. `TRIGGER:-PT1H`, `-P1D`). **iPhone Apple-Calendar subscriptions honour them** (so advance-booked sessions beep), provided the subscription's "Ignore Alerts" is off; **Google Calendar subscriptions strip them**. So she should subscribe via iOS's native calendar subscription, not via Google. **Limitation:** an alarm only fires for an event the phone has already pulled — a *same-day, just-booked* session may not have synced in time, so its alert can miss. That single flaky case is the only thing the Google write-API would add.
-
-**Security (capability URL):** a subscribing calendar client can't log in (no form, no cookie), so the secret lives **in the URL** — an unguessable token (32+ random bytes), same model as Google's own "secret iCal address." Rules: token **stored in the DB and revocable** (rotate → old URL 404s, she re-subscribes; rotation freezes, never wipes); **HTTPS only**; **never log the token**; and **decide event-title detail** (full client name vs initials vs generic "Hypnotherapy session") to limit PDPA exposure if the URL ever leaks (feed contains client names + times).
-
-**Resilience (a key requirement):** a **failed/blocked pull never wipes the phone** — the subscribed calendar keeps its last good snapshot and reconciles on the next successful fetch (a multi-day outage = stale, not lost). The **only** wipe risk is a *successful* pull that returns empty/garbage, so the endpoint **MUST return HTTP 500 on any internal error and NEVER a 200 with an empty calendar** ("zero bookings" and "something broke" must look different to the client).
-
-**Setup UX (iOS 18):** Settings → **Apps** → Calendar → Accounts → Add Account → Other → **Add Subscribed Calendar** → paste URL (Calendar moved under "Apps" in iOS 18). Easiest path = hand her a **`webcal://…` link** she taps once to get the subscribe prompt. Refresh cadence = Settings → Apps → Calendar → Accounts → **Fetch New Data**.
-
----
-
 ## 12A. Blog Editor & Rendering (Tiptap)
 
 > ⏸️ **DEPRIORITIZED (2026-06-15) — blog is not a critical part of Phase 1; moved to a late step (after admin modules + public pages). Build order: …→ clients/packages/bookings → audit-log viewer → public pages → BLOG.**
@@ -688,6 +668,26 @@ The public blog page must render the stored JSON. Two options:
 1. **Stage 1:** Blog CRUD (list/new/edit, publish toggle, excerpt/category/slug/cover-image field) + Tiptap **text-only** editor + the renderer — full write→save→display loop. *Needs nothing from Vercel.*
 2. **Stage 2:** Inline image upload → Vercel Blob (needs the Blob store + token; resize-on-upload).
 3. **Stage 3:** YouTube embeds.
+
+---
+
+## 12B. Phone calendar visibility — ICS subscription feed ("Pattern A")
+
+> **CHOSEN 2026-06-28 as the phone-visibility path (in place of the Google write-API, §12). Prototype AFTER Steps 4.5 + 4.6.**
+
+The goal is narrow: let Jennefer see her bookings on her **native iPhone calendar** (and ideally get a pre-session beep) without the heavy Google write-API. An **ICS subscription feed** delivers this cheaply.
+
+**How it works:**
+- One **tokenized, read-only** endpoint: `/api/calendar/feed/<secret-token>.ics`. It is **not a stored file** — it's a route that, on each request, queries the DB for all current bookings (+ calendar blocks) and renders **iCalendar** text live. Nothing is pre-generated; there is **no per-booking sync work** (booking create/edit/cancel are already DB writes; the feed just reflects current DB state on the next fetch).
+- The phone **pulls** the feed on its own schedule (iOS "Fetch New Data", ~15–60 min). We never push. So updates land on the phone on its next refresh — fine for glancing, not a live second-by-second mirror.
+- Each event carries a **stable `UID`** (`booking-<id>@jenneferwong.sg`, `block-<id>@…`) so edits **update in place** (no duplicates) and cancelled/deleted bookings simply **drop out** of the feed and disappear on next refresh. Cancelled bookings are **excluded** from the feed output.
+- **Alarms:** embed `VALARM`s (e.g. `TRIGGER:-PT1H`, `-P1D`). **iPhone Apple-Calendar subscriptions honour them** (so advance-booked sessions beep), provided the subscription's "Ignore Alerts" is off; **Google Calendar subscriptions strip them**. So she should subscribe via iOS's native calendar subscription, not via Google. **Limitation:** an alarm only fires for an event the phone has already pulled — a *same-day, just-booked* session may not have synced in time, so its alert can miss. That single flaky case is the only thing the Google write-API would add.
+
+**Security (capability URL):** a subscribing calendar client can't log in (no form, no cookie), so the secret lives **in the URL** — an unguessable token (32+ random bytes), same model as Google's own "secret iCal address." Rules: token **stored in the DB and revocable** (rotate → old URL 404s, she re-subscribes; rotation freezes, never wipes); **HTTPS only**; **never log the token**; and **decide event-title detail** (full client name vs initials vs generic "Hypnotherapy session") to limit PDPA exposure if the URL ever leaks (feed contains client names + times).
+
+**Resilience (a key requirement):** a **failed/blocked pull never wipes the phone** — the subscribed calendar keeps its last good snapshot and reconciles on the next successful fetch (a multi-day outage = stale, not lost). The **only** wipe risk is a *successful* pull that returns empty/garbage, so the endpoint **MUST return HTTP 500 on any internal error and NEVER a 200 with an empty calendar** ("zero bookings" and "something broke" must look different to the client).
+
+**Setup UX (iOS 18):** Settings → **Apps** → Calendar → Accounts → Add Account → Other → **Add Subscribed Calendar** → paste URL (Calendar moved under "Apps" in iOS 18). Easiest path = hand her a **`webcal://…` link** she taps once to get the subscribe prompt. Refresh cadence = Settings → Apps → Calendar → Accounts → **Fetch New Data**.
 
 ---
 

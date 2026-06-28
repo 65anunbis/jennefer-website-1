@@ -5,7 +5,7 @@ _Migrated into the repo 2026-06-28 (was a Claude auto-memory file); canonical go
 
 The functional specification for the Jennefer Wong website is largely finalized and implementation has begun.
 
-**Plan file location**: `C:\Users\Edwin\.claude\plans\this-is-an-empty-lexical-squid.md`
+**Plan file location**: `docs/PLAN.md` (in this repo; migrated 2026-06-28 from `~/.claude/plans/`)
 **Local repo**: `C:\codes\jennefer-website-1` (GitHub branches: `dev`, `main` — day-to-day work happens on `dev`)
 
 **Project identity (renamed from earlier "Onyx Therapy"):**
