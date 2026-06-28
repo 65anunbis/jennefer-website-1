@@ -133,12 +133,20 @@ export default async function BookingDayPage({
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
-      <Link
-        href={`/admin/bookings?month=${iso.slice(0, 7)}`}
-        className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
-      >
-        ← Calendar
-      </Link>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← Dashboard
+        </Link>
+        <Link
+          href={`/admin/bookings?month=${iso.slice(0, 7)}`}
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← Calendar
+        </Link>
+      </div>
 
       <div className="mt-1 flex items-center justify-between">
         <Link
@@ -228,6 +236,20 @@ export default async function BookingDayPage({
             </div>
           );
         })}
+      </div>
+      <div className="flex flex-wrap gap-2 mt-10 border-t border-neutral-200 pt-6">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← Dashboard
+        </Link>
+        <Link
+          href={`/admin/bookings?month=${iso.slice(0, 7)}`}
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← Calendar
+        </Link>
       </div>
     </main>
   );

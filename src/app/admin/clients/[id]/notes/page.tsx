@@ -44,12 +44,20 @@ export default async function SessionNotesPage({
     <main className="mx-auto max-w-3xl px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
-          <Link
-            href={`/admin/clients/${clientId}`}
-            className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
-          >
-            ← {client.name}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+            >
+              ← Dashboard
+            </Link>
+            <Link
+              href={`/admin/clients/${clientId}`}
+              className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+            >
+              ← {client.name}
+            </Link>
+          </div>
           <h1 className="mt-1 text-2xl font-semibold">Session notes</h1>
         </div>
         <Link
@@ -99,6 +107,21 @@ export default async function SessionNotesPage({
             No session notes yet.
           </p>
         )}
+      </div>
+
+      <div className="mt-10 flex flex-wrap gap-2 border-t border-neutral-200 pt-6">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← Dashboard
+        </Link>
+        <Link
+          href={`/admin/clients/${clientId}`}
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← {client.name}
+        </Link>
       </div>
     </main>
   );

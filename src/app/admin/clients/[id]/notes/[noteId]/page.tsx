@@ -41,12 +41,20 @@ export default async function EditNotePage({
 
   return (
     <main className="mx-auto max-w-lg px-6 py-10">
-      <Link
-        href={`/admin/clients/${clientId}/notes`}
-        className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
-      >
-        ← Session notes
-      </Link>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← Dashboard
+        </Link>
+        <Link
+          href={`/admin/clients/${clientId}/notes`}
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← Session notes
+        </Link>
+      </div>
       <h1 className="mb-6 mt-1 text-2xl font-semibold">Edit session note</h1>
       <SessionNoteForm
         mode="edit"
@@ -59,6 +67,20 @@ export default async function EditNotePage({
           bookingId: note.bookingId,
         }}
       />
+      <div className="flex flex-wrap gap-2 mt-10 border-t border-neutral-200 pt-6">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← Dashboard
+        </Link>
+        <Link
+          href={`/admin/clients/${clientId}/notes`}
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-600 shadow-sm hover:bg-neutral-100"
+        >
+          ← Session notes
+        </Link>
+      </div>
     </main>
   );
 }
