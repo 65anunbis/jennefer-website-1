@@ -139,7 +139,7 @@ export function ClientDirectory({ rows }: { rows: ClientRow[] }) {
               <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">WhatsApp</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Email</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Usable</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Packages usable</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Bookings unused</th>
               <th className="px-4 py-3" />
             </tr>
