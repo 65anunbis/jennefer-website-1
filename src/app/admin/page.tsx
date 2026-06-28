@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 
+export const metadata = { title: "Dashboard" };
+
 type Item = { href: string; label: string; desc: string };
 
 const STAFF_ITEMS: Item[] = [

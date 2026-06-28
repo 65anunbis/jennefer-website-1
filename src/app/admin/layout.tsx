@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { AdminProviders } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Admin — Jennefer Wong",
+  // Child pages set a short title (e.g. "Bookings") → tab reads "JW-Bookings".
+  title: { template: "JW-%s", default: "JW-Admin" },
   robots: { index: false, follow: false },
 };
 

@@ -5,6 +5,7 @@ import { BusinessHoursForm } from "./BusinessHoursForm";
 import { saveBusinessHours } from "./actions";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Business hours" };
 
 /** A @db.Time value comes back as a 1970 Date holding the wall-clock in UTC. */
 function toHHMM(d: Date): string {

@@ -16,6 +16,7 @@ import { bookingInterval, minutesOfTime, rangesOverlap } from "@/lib/overlap";
 import { ViewToggle } from "./ViewToggle";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Bookings" };
 
 const BLOCK_TYPE_LABELS: Record<string, string> = {
   vacation: "Vacation",

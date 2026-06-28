@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Testimonials" };
 
 export default async function TestimonialsPage() {
   await requireUser();

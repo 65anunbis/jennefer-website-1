@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { formatDateSGT, formatTimeSGT } from "@/lib/datetime";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Calendar blocks" };
 
 const BLOCK_TYPE_LABELS: Record<string, string> = {
   vacation: "Vacation",

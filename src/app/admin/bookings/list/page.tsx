@@ -9,6 +9,7 @@ import { ViewToggle } from "../ViewToggle";
 import { BookingsList, type BookingItem, type BlockItem } from "./BookingsList";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Bookings" };
 
 const BLOCK_TYPE_LABELS: Record<string, string> = {
   vacation: "Vacation",

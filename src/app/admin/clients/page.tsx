@@ -6,6 +6,7 @@ import { sessionsRemaining } from "@/lib/sessions";
 import { ClientDirectory, type ClientRow } from "./ClientDirectory";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Clients" };
 
 export default async function ClientsPage() {
   await requireUser();

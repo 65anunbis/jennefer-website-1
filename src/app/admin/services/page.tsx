@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Services" };
 
 function formatPrice(value: { toString(): string }) {
   return `$${Number(value).toFixed(2)}`;

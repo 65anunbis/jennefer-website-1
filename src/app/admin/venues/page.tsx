@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Venues" };
 
 export default async function VenuesPage() {
   await requireAdmin();
