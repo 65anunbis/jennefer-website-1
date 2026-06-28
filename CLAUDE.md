@@ -22,6 +22,7 @@ This file is the quick reference; the `docs/` files hold the detail. Keep CLAUDE
 
 ## Hard rules / standing decisions
 - **Clients are NEVER deleted** (no delete UI / soft-delete). **Session notes are admin-only** (staff never see them).
+- **New bookings must consume a package** (decided 2026-06-28) — the New-booking form has no ad-hoc option and pre-selects the client's oldest available package; if none has sessions left, it blocks and points to "Record a purchase". The Edit form still allows clearing the package so legacy/ad-hoc bookings stay editable. (Creating a *client* needs no package.)
 - **Do NOT build the blog** until the owner picks renderer A vs B (see `docs/PLAN.md` §12A).
 - **Google Calendar write-API is DEFERRED** (`docs/PLAN.md` §12): `src/lib/gcal.ts` + the `gcal_sync_failures` table are dormant scaffolding, excluded from the current build incl. the EOD/SOD retry. Phone visibility will be an **ICS feed** (§12B), prototyped after 4.5 + 4.6.
 - Real secrets live in `.env` / Vercel env (gitignored) — never in committed docs. Personal/secret scratch → `CLAUDE.local.md` (gitignored).

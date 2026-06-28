@@ -23,12 +23,12 @@ const STATUS_LABELS: Record<string, string> = {
   no_show: "No-show",
 };
 
-// Booking-history row shading by status (plan UI request 2026-06-20).
-const BOOKING_ROW_CLASS: Record<string, string> = {
-  cancelled: "bg-neutral-200 text-black",
-  completed: "bg-green-100 text-black",
-  confirmed: "bg-green-100 font-bold text-blue-700",
-  no_show: "bg-green-100 text-red-700",
+// Soft status pills (matches the Bookings list view).
+const STATUS_BADGE: Record<string, string> = {
+  confirmed: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  completed: "bg-green-50 text-green-700 ring-1 ring-green-200",
+  cancelled: "bg-neutral-100 text-neutral-500 ring-1 ring-neutral-200",
+  no_show: "bg-red-50 text-red-700 ring-1 ring-red-200",
 };
 
 export default async function ClientDetailPage({
@@ -204,34 +204,50 @@ export default async function ClientDetailPage({
               <tr>
                 <th className="px-4 py-3 font-medium">When (SGT)</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Delivery</th>
-                <th className="px-4 py-3 font-medium">Package</th>
+                <th className="hidden px-4 py-3 font-medium sm:table-cell">Delivery</th>
+                <th className="hidden px-4 py-3 font-medium sm:table-cell">Package</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
               {client.bookings.map((b) => (
-                <tr key={b.id} className={BOOKING_ROW_CLASS[b.status] ?? ""}>
+                <tr
+                  key={b.id}
+                  className={`hover:bg-neutral-50 ${b.status === "cancelled" ? "text-neutral-400" : ""}`}
+                >
                   <td className="px-4 py-3">
                     {formatDateTimeSGT(b.scheduledDate, b.scheduledTime)}
                   </td>
                   <td className="px-4 py-3">
-                    {STATUS_LABELS[b.status] ?? b.status}
+                    <span
+                      className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[b.status] ?? "bg-neutral-100 text-neutral-600"}`}
+                    >
+                      {STATUS_LABELS[b.status] ?? b.status}
+                    </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="hidden px-4 py-3 sm:table-cell">
                     {b.deliveryType === "zoom"
                       ? "Zoom"
                       : `In person${b.venue ? ` · ${b.venue.name}` : ""}`}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="hidden px-4 py-3 sm:table-cell">
                     {b.clientPackage
                       ? `${b.clientPackage.package.service.name} — ${b.clientPackage.package.name}`
                       : "Ad-hoc"}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      href={`/admin/bookings/${b.id}`}
+                      className="underline underline-offset-2"
+                    >
+                      Edit
+                    </Link>
                   </td>
                 </tr>
               ))}
               {client.bookings.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-neutral-500">
+                  <td colSpan={5} className="px-4 py-6 text-center text-neutral-500">
                     No bookings yet.
                   </td>
                 </tr>

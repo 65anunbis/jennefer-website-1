@@ -51,12 +51,12 @@ const STATUS_OPTIONS = [
   { value: "no_show", label: "No-show" },
 ];
 
-function SubmitButton({ label }: { label: string }) {
+function SubmitButton({ label, disabled }: { label: string; disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
     >
       {pending ? "Saving…" : label}
@@ -77,33 +77,66 @@ export function BookingForm({
 }: Props) {
   const [state, formAction] = useFormState(action, {} as FormState);
 
-  const [clientId, setClientId] = useState<string>(
-    booking
-      ? String(booking.clientId)
-      : defaultClientId
-        ? String(defaultClientId)
-        : "",
-  );
-  const [clientPackageId, setClientPackageId] = useState<string>(
-    booking?.clientPackageId ? String(booking.clientPackageId) : "",
-  );
+  // Oldest available (sessions-left) package for a client — packages arrive
+  // ordered oldest-first, so the first match is the FIFO choice (plan §7).
+  const oldestAvailableFor = (cid: string) =>
+    packages.find((p) => String(p.clientId) === cid && p.remaining > 0);
+
+  const initialClientId = booking
+    ? String(booking.clientId)
+    : defaultClientId
+      ? String(defaultClientId)
+      : "";
+  // New bookings must consume a package (no ad-hoc): pre-select the oldest
+  // available one for the initial client. Edits keep their existing link.
+  const initialPkg = booking
+    ? booking.clientPackageId
+      ? String(booking.clientPackageId)
+      : ""
+    : initialClientId
+      ? (oldestAvailableFor(initialClientId)?.id.toString() ?? "")
+      : "";
+  const initialPkgObj = packages.find((p) => String(p.id) === initialPkg);
+
+  const [clientId, setClientId] = useState<string>(initialClientId);
+  const [clientPackageId, setClientPackageId] = useState<string>(initialPkg);
   const [deliveryType, setDeliveryType] = useState<"in_person" | "zoom">(
-    booking?.deliveryType ?? "in_person",
+    booking?.deliveryType ?? initialPkgObj?.deliveryType ?? "in_person",
   );
   const [duration, setDuration] = useState<string>(
-    booking ? String(booking.durationMinutes) : "60",
+    booking
+      ? String(booking.durationMinutes)
+      : initialPkgObj
+        ? String(initialPkgObj.durationMinutes)
+        : "60",
   );
 
-  // Packages belonging to the chosen client (plus, in edit mode, the booking's
-  // own currently-linked package even if it is otherwise exhausted/inactive).
+  // Packages belonging to the chosen client. Edit mode lists all (incl. the
+  // current link); create mode books only against ones with sessions left.
   const clientPackages = useMemo(
     () => packages.filter((p) => String(p.clientId) === clientId),
     [packages, clientId],
   );
+  const availablePackages = useMemo(
+    () => clientPackages.filter((p) => p.remaining > 0),
+    [clientPackages],
+  );
+  // Create-mode block: a chosen client with no package that has sessions left.
+  const noAvailable =
+    mode === "create" && clientId !== "" && availablePackages.length === 0;
 
   function onClientChange(value: string) {
     setClientId(value);
-    setClientPackageId(""); // reset package when the client changes
+    if (mode === "create") {
+      const pkg = oldestAvailableFor(value);
+      setClientPackageId(pkg ? String(pkg.id) : "");
+      if (pkg) {
+        setDeliveryType(pkg.deliveryType);
+        setDuration(String(pkg.durationMinutes));
+      }
+    } else {
+      setClientPackageId("");
+    }
   }
 
   function onPackageChange(value: string) {
@@ -158,24 +191,56 @@ export function BookingForm({
 
       <label className="block space-y-1">
         <span className="text-sm font-medium">Package</span>
-        <select
-          name="clientPackageId"
-          value={clientPackageId}
-          onChange={(e) => onPackageChange(e.target.value)}
-          className={inputClass}
-        >
-          <option value="">— Ad-hoc (no package) —</option>
-          {clientPackages.map((p) => {
-            const isCurrent = String(p.id) === clientPackageId;
-            const exhausted = p.remaining <= 0 && !isCurrent;
-            return (
-              <option key={p.id} value={p.id} disabled={exhausted}>
-                {p.label} — {p.remaining} left{exhausted ? " (exhausted)" : ""}
+        {mode === "edit" ? (
+          <select
+            name="clientPackageId"
+            value={clientPackageId}
+            onChange={(e) => onPackageChange(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">— Ad-hoc (no package) —</option>
+            {clientPackages.map((p) => {
+              const isCurrent = String(p.id) === clientPackageId;
+              const exhausted = p.remaining <= 0 && !isCurrent;
+              return (
+                <option key={p.id} value={p.id} disabled={exhausted}>
+                  {p.label} — {p.remaining} left{exhausted ? " (exhausted)" : ""}
+                </option>
+              );
+            })}
+          </select>
+        ) : noAvailable ? (
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            This client has no package with sessions left.{" "}
+            <Link
+              href={`/admin/clients/${clientId}/packages/new`}
+              className="font-medium underline underline-offset-2"
+            >
+              Record a purchase
+            </Link>{" "}
+            first.
+          </p>
+        ) : (
+          <select
+            name="clientPackageId"
+            value={clientPackageId}
+            onChange={(e) => onPackageChange(e.target.value)}
+            required
+            className={inputClass}
+          >
+            {clientId === "" && (
+              <option value="" disabled>
+                — Choose a client first —
               </option>
-            );
-          })}
-        </select>
-        {clientId === "" && (
+            )}
+            {availablePackages.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label} — {p.remaining} left
+              </option>
+            ))}
+          </select>
+        )}
+        {mode === "create" && clientId === "" && (
           <span className="text-xs text-neutral-500">
             Choose a client to see their packages.
           </span>
@@ -306,6 +371,7 @@ export function BookingForm({
 
       <div className="flex items-center gap-3 pt-2">
         <SubmitButton
+          disabled={noAvailable}
           label={
             state.overlapWarning
               ? "Save anyway"

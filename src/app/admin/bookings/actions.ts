@@ -122,6 +122,16 @@ async function readInput(
     }
   }
 
+  // New bookings must consume a package (ad-hoc creation is disabled). Edits
+  // may keep or clear the link, so existing ad-hoc bookings stay editable.
+  if (!isEdit && clientPackageId === null) {
+    return {
+      ok: false,
+      error:
+        "Please choose a package. If this client has none with sessions left, record a purchase first.",
+    };
+  }
+
   // Delivery XOR.
   const deliveryRaw = String(formData.get("deliveryType") ?? "");
   if (!DELIVERY_TYPES.includes(deliveryRaw as DeliveryType))

@@ -55,6 +55,12 @@ function readPayment(
   if (!PAYMENT_MODES.includes(paymentModeRaw as PaymentMode))
     return { ok: false, error: "Please choose a payment mode." };
 
+  if (paid && !paidDate)
+    return {
+      ok: false,
+      error: "Please enter the paid date when the package is marked as paid.",
+    };
+
   return {
     ok: true,
     value: {

@@ -67,6 +67,7 @@ export function PurchaseForm({
   const [sessions, setSessions] = useState<number | null>(
     purchase?.sessionsTotal ?? null,
   );
+  const [paid, setPaid] = useState(purchase?.paid ?? false);
 
   function onPackageChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const pkg = packages.find((p) => String(p.id) === e.target.value);
@@ -183,10 +184,13 @@ export function PurchaseForm({
           </select>
         </label>
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Paid date (optional)</span>
+          <span className="text-sm font-medium">
+            Paid date{paid ? "" : " (optional)"}
+          </span>
           <input
             name="paidDate"
             type="date"
+            required={paid}
             defaultValue={purchase?.paidDate ?? ""}
             className={inputClass}
           />
@@ -197,7 +201,8 @@ export function PurchaseForm({
         <input
           type="checkbox"
           name="paid"
-          defaultChecked={purchase?.paid ?? false}
+          checked={paid}
+          onChange={(e) => setPaid(e.target.checked)}
           className="h-4 w-4"
         />
         <span className="text-sm font-medium">Paid</span>
