@@ -8,7 +8,7 @@ export type ClientRow = {
   name: string;
   whatsapp: string;
   email: string | null;
-  packagesCount: number;
+  usable: number;
   unused: number;
 };
 
@@ -117,8 +117,7 @@ export function ClientDirectory({ rows }: { rows: ClientRow[] }) {
                     <p className="text-sm text-neutral-600">{c.email}</p>
                   )}
                   <p className="text-xs text-neutral-500">
-                    {c.packagesCount} package{c.packagesCount === 1 ? "" : "s"} ·{" "}
-                    {c.unused} unused
+                    {c.usable} usable · {c.unused} unused
                   </p>
                 </Link>
               ))}
@@ -140,7 +139,7 @@ export function ClientDirectory({ rows }: { rows: ClientRow[] }) {
               <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">WhatsApp</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Email</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Packages</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Usable</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Bookings unused</th>
               <th className="px-4 py-3" />
             </tr>
@@ -179,7 +178,7 @@ function Group({ groupKey, items }: { groupKey: string; items: ClientRow[] }) {
           <td className="px-4 py-3 font-medium">{c.name}</td>
           <td className="px-4 py-3">{c.whatsapp}</td>
           <td className="hidden px-4 py-3 sm:table-cell">{c.email ?? "—"}</td>
-          <td className="hidden px-4 py-3 sm:table-cell">{c.packagesCount}</td>
+          <td className="hidden px-4 py-3 sm:table-cell">{c.usable}</td>
           <td className="hidden px-4 py-3 sm:table-cell">{c.unused}</td>
           <td className="px-4 py-3 text-right">
             <Link

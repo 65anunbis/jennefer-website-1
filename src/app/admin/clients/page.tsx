@@ -12,7 +12,6 @@ export default async function ClientsPage() {
   const clients = await prisma.client.findMany({
     orderBy: { name: "asc" },
     include: {
-      _count: { select: { clientPackages: true } },
       clientPackages: {
         select: {
           sessionsTotal: true,
@@ -23,22 +22,25 @@ export default async function ClientsPage() {
     },
   });
 
-  const rows: ClientRow[] = clients.map((c) => ({
-    id: c.id,
-    name: c.name,
-    whatsapp: formatWhatsappDisplay(c.whatsappNumber),
-    email: c.email,
-    packagesCount: c._count.clientPackages,
-    // Unused = sessions still available to book: summed remaining across
-    // non-cancelled packages (cancelled bookings free a session).
-    unused: c.clientPackages
-      .filter((p) => p.status !== "cancelled")
-      .reduce(
+  const rows: ClientRow[] = clients.map((c) => {
+    const live = c.clientPackages.filter((p) => p.status !== "cancelled");
+    return {
+      id: c.id,
+      name: c.name,
+      whatsapp: formatWhatsappDisplay(c.whatsappNumber),
+      email: c.email,
+      // "Usable" = non-cancelled packages that still have sessions left.
+      usable: live.filter(
+        (p) => sessionsRemaining(p.sessionsTotal, p.bookings.map((b) => b.status)) > 0,
+      ).length,
+      // Unused = total sessions still available to book across those packages.
+      unused: live.reduce(
         (sum, p) =>
           sum + sessionsRemaining(p.sessionsTotal, p.bookings.map((b) => b.status)),
         0,
       ),
-  }));
+    };
+  });
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
