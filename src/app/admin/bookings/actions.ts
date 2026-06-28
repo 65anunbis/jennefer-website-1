@@ -350,7 +350,11 @@ export async function updateBooking(
     changed.length ? `Updated: ${changed.join(", ")}` : "No changes",
   );
   revalidatePath("/admin/bookings");
-  redirect(`/admin/bookings/${id}`);
+  revalidatePath(`/admin/bookings/${id}`);
+  // Redirect to the list, NOT back to this same page — a server-action
+  // redirect to the route the form was submitted from triggers a client-side
+  // exception on the post-redirect refresh. The list is a safe destination.
+  redirect("/admin/bookings");
 }
 
 export async function deleteBooking(id: number): Promise<void> {
