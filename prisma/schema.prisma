@@ -190,6 +190,7 @@ model Booking {
   durationMinutes Int           @map("duration_minutes")
   status          BookingStatus @default(confirmed)
   bookingNotes    String?       @map("booking_notes")
+  reminderSentAt  DateTime?     @map("reminder_sent_at")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
