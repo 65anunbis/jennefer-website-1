@@ -14,6 +14,18 @@ export type ClientRow = {
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
+/** Show the number, or a red ✕ pill when the count is zero. */
+function Count({ n }: { n: number }) {
+  if (n === 0) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">
+        ✕
+      </span>
+    );
+  }
+  return <span>{n}</span>;
+}
+
 /** First-letter bucket for grouping/index: A–Z, or "#" for anything else. */
 function bucket(name: string): string {
   const c = name.trim()[0]?.toUpperCase() ?? "#";
@@ -116,8 +128,9 @@ export function ClientDirectory({ rows }: { rows: ClientRow[] }) {
                   {c.email && (
                     <p className="text-sm text-neutral-600">{c.email}</p>
                   )}
-                  <p className="text-xs text-neutral-500">
-                    {c.usable} usable · {c.unused} unused
+                  <p className="flex items-center gap-1.5 text-xs text-neutral-500">
+                    <Count n={c.usable} /> packages ·{" "}
+                    <Count n={c.unused} /> unused
                   </p>
                 </Link>
               ))}
@@ -139,8 +152,8 @@ export function ClientDirectory({ rows }: { rows: ClientRow[] }) {
               <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">WhatsApp</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Email</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Packages usable</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell">Bookings unused</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Packages</th>
+              <th className="hidden px-4 py-3 font-medium sm:table-cell">Bookings Unused</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -178,8 +191,8 @@ function Group({ groupKey, items }: { groupKey: string; items: ClientRow[] }) {
           <td className="px-4 py-3 font-medium">{c.name}</td>
           <td className="px-4 py-3">{c.whatsapp}</td>
           <td className="hidden px-4 py-3 sm:table-cell">{c.email ?? "—"}</td>
-          <td className="hidden px-4 py-3 sm:table-cell">{c.usable}</td>
-          <td className="hidden px-4 py-3 sm:table-cell">{c.unused}</td>
+          <td className="hidden px-4 py-3 sm:table-cell"><Count n={c.usable} /></td>
+          <td className="hidden px-4 py-3 sm:table-cell"><Count n={c.unused} /></td>
           <td className="px-4 py-3 text-right">
             <Link
               href={`/admin/clients/${c.id}`}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import type { UserFormState } from "./actions";
@@ -35,6 +36,7 @@ function SubmitButton({ label }: { label: string }) {
 
 export function UserForm({ action, mode, user, isSelf }: Props) {
   const [state, formAction] = useFormState(action, {} as UserFormState);
+  const [showPw, setShowPw] = useState(false);
   const isEdit = mode === "edit";
 
   return (
@@ -118,7 +120,7 @@ export function UserForm({ action, mode, user, isSelf }: Props) {
         </span>
         <input
           name="password"
-          type="password"
+          type={showPw ? "text" : "password"}
           autoComplete="new-password"
           required={!isEdit}
           placeholder={isEdit ? "Leave blank to keep current password" : ""}
@@ -127,6 +129,16 @@ export function UserForm({ action, mode, user, isSelf }: Props) {
         <span className="text-xs text-neutral-500">
           The user will be required to change it on next sign in.
         </span>
+      </label>
+
+      <label className="flex items-center gap-2 text-sm text-neutral-600">
+        <input
+          type="checkbox"
+          checked={showPw}
+          onChange={(e) => setShowPw(e.target.checked)}
+          className="h-4 w-4"
+        />
+        Show password
       </label>
 
       {isEdit &&

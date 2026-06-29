@@ -145,14 +145,12 @@ export default function ChangePasswordPage() {
           </button>
 
           {!forced && (
-            <div className="text-center">
-              <Link
-                href="/admin"
-                className="text-sm text-neutral-600 underline underline-offset-2"
-              >
-                Cancel and go back to Dashboard
-              </Link>
-            </div>
+            <Link
+              href="/admin"
+              className="block w-full rounded-md border border-neutral-300 bg-white px-4 py-2 text-center text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-100"
+            >
+              ← Cancel and go back to Dashboard
+            </Link>
           )}
         </form>
       </div>
